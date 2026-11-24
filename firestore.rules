@@ -1,0 +1,15 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // BreatheWise AI — Cloud Firestore Security Rules
+    // Architecture: Server-Mediated via Next.js Route Handlers & Firebase Admin SDK.
+    // All direct client-side reads and writes through web SDK are denied.
+    // All persistence is safely mediated through Next.js server route handlers using Firebase Admin SDK,
+    // ensuring complete multi-tenant tenant isolation, cryptographic validation, zero client-side tampering,
+    // and strict operation within the Firebase Spark (no-cost) quota.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
