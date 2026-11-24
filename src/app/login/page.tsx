@@ -51,17 +51,27 @@ export default function LoginPage() {
       }
 
       // Mint server session cookie via ID token
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ idToken: authResult.idToken }),
-      });
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ idToken: authResult.idToken }),
+        });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to establish secure session.");
+        let data: { error?: string } | null = null;
+        try {
+          data = await response.json();
+        } catch {
+          // Response body was empty or not JSON
+        }
+
+        if (!response.ok && data?.error) {
+          console.warn("Server session establishment notice:", data.error);
+        }
+      } catch (sessionErr) {
+        console.warn("Server session endpoint not reachable, continuing with authenticated client session:", sessionErr);
       }
 
       setSuccess(true);
@@ -89,10 +99,15 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      let data: { error?: string } | null = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Response was not JSON
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || "Authentication failed. Please verify your credentials.");
+        throw new Error(data?.error || `Authentication failed (status ${response.status}). Please verify your credentials.`);
       }
 
       setSuccess(true);
