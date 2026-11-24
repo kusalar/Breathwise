@@ -130,7 +130,13 @@ export function AiAssistantView({
 
       if (!response.ok) {
         const errorJson = await response.json().catch(() => null);
-        throw new Error(errorJson?.error || `Server returned status ${response.status}`);
+        if (response.status === 429) {
+          throw new Error(errorJson?.error || "Rate limit reached. Please wait a few moments before asking another question.");
+        }
+        if (response.status === 500 || response.status === 503 || response.status === 504) {
+          throw new Error("The AI service is temporarily experiencing high demand. Please try asking again in a few moments.");
+        }
+        throw new Error(errorJson?.error || `Unable to reach intelligence service (Status ${response.status}). Please try again.`);
       }
 
       const json = await response.json();

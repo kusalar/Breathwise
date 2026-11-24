@@ -133,14 +133,35 @@ export async function POST(request: NextRequest) {
       // Verified session ownership: session exists and belongs strictly to authenticated user.id derived from session cookie
     }
 
-    const result = await geminiService.chat({
-      message: parsed.data.message,
-      location: parsed.data.location,
-      reading: parsed.data.reading,
-      weather: parsed.data.weather,
-      history: parsed.data.history,
-      householdPreferences: parsed.data.householdPreferences,
-    });
+    let result;
+    try {
+      result = await geminiService.chat({
+        message: parsed.data.message,
+        location: parsed.data.location,
+        reading: parsed.data.reading,
+        weather: parsed.data.weather,
+        history: parsed.data.history,
+        householdPreferences: parsed.data.householdPreferences,
+      });
+    } catch (aiErr) {
+      console.warn("[AiChatRoute] Primary/secondary AI service threw, activating safe fallback:", aiErr);
+      const fallback = (geminiService as any).getContextualFallbackChatReply(
+        {
+          message: parsed.data.message,
+          location: parsed.data.location,
+          reading: parsed.data.reading,
+          weather: parsed.data.weather,
+        },
+        50
+      );
+      result = {
+        ...fallback,
+        fallbackUsed: true,
+        modelUsed: "none",
+        generationStatus: "deterministic_fallback",
+        fallbackReason: "Engine exception fallback",
+      };
+    }
 
     return NextResponse.json(
       { success: true, data: result, requestId: parsedBody.requestId },
