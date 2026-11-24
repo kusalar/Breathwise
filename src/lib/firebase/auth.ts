@@ -23,6 +23,7 @@ export interface ClientAuthResult {
   user?: User;
   idToken?: string;
   error?: string;
+  code?: string;
 }
 
 /**
@@ -105,8 +106,9 @@ export async function loginWithGoogle(): Promise<ClientAuthResult> {
     const idToken = await cred.user.getIdToken();
     return { success: true, user: cred.user, idToken };
   } catch (error) {
+    const fbError = error as { code?: string; message?: string };
     const message = error instanceof Error ? error.message : "Google authentication failed";
-    return { success: false, error: message };
+    return { success: false, error: message, code: fbError.code };
   }
 }
 

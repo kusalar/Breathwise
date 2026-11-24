@@ -25,11 +25,28 @@ export default function LoginPage() {
       const authResult = await loginWithGoogle();
       if (!authResult.success || !authResult.idToken) {
         if (
+          authResult.code === "auth/popup-closed-by-user" ||
+          authResult.code === "auth/cancelled-popup-request" ||
           authResult.error?.includes("popup-closed-by-user") ||
           authResult.error?.includes("cancelled-popup-request")
         ) {
           return;
         }
+
+        if (authResult.code === "auth/operation-not-allowed") {
+          throw new Error(
+            "Google Sign-In is not enabled in Firebase Console. Please enable the Google provider under Authentication -> Sign-in method."
+          );
+        } else if (authResult.code === "auth/unauthorized-domain") {
+          throw new Error(
+            "This domain is not authorized in Firebase Console. Add it under Authentication -> Settings -> Authorized domains."
+          );
+        } else if (authResult.code === "auth/popup-blocked") {
+          throw new Error(
+            "Sign-in popup was blocked by your browser. Please allow popups for this site and try again."
+          );
+        }
+
         throw new Error(authResult.error || "Google Sign-In failed.");
       }
 
