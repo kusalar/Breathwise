@@ -148,13 +148,13 @@ export class GeminiService {
   private readonly primaryTimeoutMs = 3500;
 
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY;
-    this.modelName = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
-    this.fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash";
-    this.groqApiKey = process.env.GROQ_API_KEY;
-    this.groqModelName = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+    this.apiKey = process.env.GEMINI_API_KEY?.replace(/^["']|["']$/g, "").trim();
+    this.modelName = (process.env.GEMINI_MODEL || "gemini-3.5-flash-lite").replace(/^["']|["']$/g, "").trim();
+    this.fallbackModelName = (process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash").replace(/^["']|["']$/g, "").trim();
+    this.groqApiKey = process.env.GROQ_API_KEY?.replace(/^["']|["']$/g, "").trim();
+    this.groqModelName = (process.env.GROQ_MODEL || "openai/gpt-oss-120b").replace(/^["']|["']$/g, "").trim();
 
-    if (this.apiKey && this.apiKey.trim().length > 0) {
+    if (this.apiKey && this.apiKey.length > 0) {
       try {
         this.client = new GoogleGenAI({ apiKey: this.apiKey });
       } catch (e) {
@@ -218,71 +218,73 @@ export class GeminiService {
    */
   public async executeGroqFallback(
     prompt: string,
-    timeoutMs = 3000,
+    timeoutMs = 4000,
     jsonMode = false
   ): Promise<string | null> {
-    if (!this.groqApiKey) return null;
+    const key = this.groqApiKey?.replace(/^["']|["']$/g, "").trim();
+    if (!key) return null;
 
-    try {
+    const candidateModels = [
+      this.groqModelName,
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "qwen/qwen3.8-27b",
+    ].filter(Boolean);
+    const modelsToTry = Array.from(new Set(candidateModels));
+
+    for (const model of modelsToTry) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-      const candidateModels = [
-        this.groqModelName,
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b",
-        "qwen/qwen3.8-27b",
-        "llama-3.3-70b-versatile",
-      ];
-      const modelsToTry = Array.from(new Set(candidateModels));
-
-      for (const model of modelsToTry) {
-        try {
-          const bodyPayload: Record<string, unknown> = {
-            model,
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are BreatheWise AI's environmental companion. Provide clear, scientifically accurate, and actionable air quality and sustainability guidance for Indian urban settings.",
-              },
-              { role: "user", content: prompt },
-            ],
-            temperature: 0.2,
-            max_tokens: 1024,
-          };
-
-          if (jsonMode) {
-            bodyPayload.response_format = { type: "json_object" };
-          }
-
-          const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            signal: controller.signal,
-            headers: {
-              Authorization: `Bearer ${this.groqApiKey}`,
-              "Content-Type": "application/json",
+      try {
+        const bodyPayload: Record<string, unknown> = {
+          model,
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are BreatheWise AI's environmental companion. Provide clear, scientifically accurate, and actionable air quality and sustainability guidance for Indian urban settings.",
             },
-            body: JSON.stringify(bodyPayload),
-          });
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.2,
+          max_tokens: 1024,
+        };
 
-          if (!response.ok) {
-            continue;
-          }
+        if (jsonMode) {
+          bodyPayload.response_format = { type: "json_object" };
+        }
 
-          const data = await response.json();
-          clearTimeout(timer);
-          const reply = data.choices?.[0]?.message?.content?.trim();
-          if (reply) return reply;
-        } catch {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bodyPayload),
+        });
+
+        clearTimeout(timer);
+
+        if (!response.ok) {
+          console.warn(`[GeminiService] Groq model ${model} returned status ${response.status}`);
           continue;
         }
+
+        const data = await response.json();
+        const reply = data.choices?.[0]?.message?.content?.trim();
+        if (reply) {
+          console.info(`[GeminiService] Groq fallback answered successfully using ${model}`);
+          return reply;
+        }
+      } catch (candidateErr) {
+        clearTimeout(timer);
+        console.warn(`[GeminiService] Groq model ${model} request error:`, candidateErr);
+        continue;
       }
-      clearTimeout(timer);
-      return null;
-    } catch {
-      return null;
     }
+    return null;
   }
 
   /**
@@ -449,7 +451,7 @@ Provide response as a strict JSON object with:
       if (this.groqApiKey) {
         try {
           console.info("[GeminiService] Attempting Groq secondary cloud failover for insight...");
-          const groqJson = await this.executeGroqFallback(insightPrompt, 2500, true);
+          const groqJson = await this.executeGroqFallback(insightPrompt, 3500, true);
           if (groqJson) {
             const parsed = JSON.parse(groqJson);
             return this.formatInsightResponse(parsed, location, dataQuality, `groq/${this.groqModelName}`, true);
@@ -644,7 +646,7 @@ CRITICAL SAFETY & MEDICAL DISCLAIMER RULES:
 
 User Question: ${payload.message}
 `;
-        const groqReply = await this.executeGroqFallback(groqPrompt, 3000, false);
+        const groqReply = await this.executeGroqFallback(groqPrompt, 4000, false);
         if (groqReply) {
           return {
             reply: groqReply,
