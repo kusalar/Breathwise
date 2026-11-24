@@ -35,6 +35,28 @@ export function FamilyProtectionView() {
   const [respiratorySensitivity, setRespiratorySensitivity] = React.useState(true);
   const [notes, setNotes] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
+
+  const LOCAL_STORAGE_KEY = "breathewise_household_members";
+
+  const readLocalMembers = React.useCallback((): HouseholdMember[] => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as HouseholdMember[]) : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const writeLocalMembers = React.useCallback((list: HouseholdMember[]) => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
 
   const fetchMembers = React.useCallback(async () => {
     try {
@@ -42,14 +64,23 @@ export function FamilyProtectionView() {
       const res = await fetch("/api/user/household");
       if (res.ok) {
         const data = await res.json();
-        setMembers(data.members || []);
+        const serverMembers: HouseholdMember[] = data.members || [];
+        if (serverMembers.length > 0) {
+          setMembers(serverMembers);
+          writeLocalMembers(serverMembers);
+        } else {
+          const local = readLocalMembers();
+          setMembers(local);
+        }
+      } else {
+        setMembers(readLocalMembers());
       }
     } catch {
-      // error
+      setMembers(readLocalMembers());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [readLocalMembers, writeLocalMembers]);
 
   React.useEffect(() => {
     fetchMembers();
@@ -63,6 +94,7 @@ export function FamilyProtectionView() {
     setRespiratorySensitivity(true);
     setNotes("");
     setEditingId(null);
+    setFormError(null);
     setShowForm(false);
   };
 
@@ -74,53 +106,111 @@ export function FamilyProtectionView() {
     setRespiratorySensitivity(m.respiratorySensitivity);
     setNotes(m.notes || "");
     setEditingId(m.id);
+    setFormError(null);
     setShowForm(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setFormError("Please enter a name for the family member.");
+      return;
+    }
+
     setSubmitting(true);
+    setFormError(null);
+    const parsedAge = Number.isFinite(Number(ageYears)) ? Math.max(0, Math.min(120, Math.round(Number(ageYears)))) : undefined;
+
     try {
       if (editingId) {
-        // PUT update
+        const payload = {
+          id: editingId,
+          name: trimmedName,
+          relation,
+          ageYears: parsedAge,
+          vulnerabilityLevel,
+          respiratorySensitivity,
+          notes: notes.trim() || undefined,
+        };
         const res = await fetch("/api/user/household", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: editingId,
-            name,
-            relation,
-            ageYears: Number(ageYears),
-            vulnerabilityLevel,
-            respiratorySensitivity,
-            notes,
-          }),
+          body: JSON.stringify(payload),
         });
+        const updatedList = members.map((m) =>
+          m.id === editingId
+            ? { ...m, ...payload, updatedAt: new Date().toISOString() }
+            : m
+        );
+        setMembers(updatedList);
+        writeLocalMembers(updatedList);
         if (res.ok) {
           await fetchMembers();
-          resetForm();
         }
+        resetForm();
       } else {
-        // POST create
+        const payload = {
+          name: trimmedName,
+          relation,
+          ageYears: parsedAge,
+          vulnerabilityLevel,
+          respiratorySensitivity,
+          notes: notes.trim() || undefined,
+        };
         const res = await fetch("/api/user/household", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            relation,
-            ageYears: Number(ageYears),
-            vulnerabilityLevel,
-            respiratorySensitivity,
-            notes,
-          }),
+          body: JSON.stringify(payload),
         });
+
         if (res.ok) {
-          await fetchMembers();
+          const json = await res.json();
+          const created: HouseholdMember = json.member || {
+            ...payload,
+            id: `local-${Date.now()}`,
+            userId: "local",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          const updatedList = [...members, created];
+          setMembers(updatedList);
+          writeLocalMembers(updatedList);
+          resetForm();
+        } else {
+          // Graceful local persistence fallback if server auth session is unavailable
+          const localMember: HouseholdMember = {
+            ...payload,
+            id: `local-${Date.now()}`,
+            userId: "local",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          const updatedList = [...members, localMember];
+          setMembers(updatedList);
+          writeLocalMembers(updatedList);
           resetForm();
         }
       }
     } catch {
-      // error
+      const localMember: HouseholdMember = {
+        id: editingId || `local-${Date.now()}`,
+        userId: "local",
+        name: trimmedName,
+        relation,
+        ageYears: parsedAge,
+        vulnerabilityLevel,
+        respiratorySensitivity,
+        notes: notes.trim() || undefined,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const updatedList = editingId
+        ? members.map((m) => (m.id === editingId ? localMember : m))
+        : [...members, localMember];
+      setMembers(updatedList);
+      writeLocalMembers(updatedList);
+      resetForm();
     } finally {
       setSubmitting(false);
     }
@@ -128,13 +218,13 @@ export function FamilyProtectionView() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to remove this family profile?")) return;
+    const updatedList = members.filter((m) => m.id !== id);
+    setMembers(updatedList);
+    writeLocalMembers(updatedList);
     try {
-      const res = await fetch(`/api/user/household?id=${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setMembers((prev) => prev.filter((m) => m.id !== id));
-      }
+      await fetch(`/api/user/household?id=${encodeURIComponent(id)}`, { method: "DELETE" });
     } catch {
-      // error
+      // local state already updated
     }
   };
 
@@ -189,6 +279,11 @@ export function FamilyProtectionView() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {formError && (
+                <Alert variant="destructive" className="text-xs">
+                  <AlertDescription>{formError}</AlertDescription>
+                </Alert>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">

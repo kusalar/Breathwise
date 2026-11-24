@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Bell, User, Search, ShieldAlert, Sparkles, Menu, MapPin, Settings } from "lucide-react";
+import Link from "next/link";
+import { Bell, User, Search, ShieldAlert, Sparkles, Menu, MapPin, Settings, Users, Wind } from "lucide-react";
 import { LocationSelector } from "@/components/shared/location-selector";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -155,15 +156,30 @@ export function DashboardHeader({
                     {defaultLocation?.name || currentLocation.name}
                   </span>
                 </button>
-                <div className="px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-emerald-950/40 cursor-pointer text-slate-700 dark:text-slate-300">
-                  Profile & Health Preferences
-                </div>
-                <div className="px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-emerald-950/40 cursor-pointer text-slate-700 dark:text-slate-300">
-                  Family Group Management
-                </div>
-                <div className="px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-emerald-950/40 cursor-pointer text-slate-700 dark:text-slate-300">
-                  Air Purifier Hardware Sync
-                </div>
+                <Link
+                  href="/dashboard/settings"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-emerald-950/40 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors"
+                >
+                  <Settings className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Profile & Health Preferences</span>
+                </Link>
+                <Link
+                  href="/dashboard/family-protection"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-emerald-950/40 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors"
+                >
+                  <Users className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Family Group Management</span>
+                </Link>
+                <Link
+                  href="/dashboard/indoor-air"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-emerald-950/40 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors"
+                >
+                  <Wind className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Air Purifier Hardware Sync</span>
+                </Link>
               </div>
               <div className="pt-2 border-t border-slate-100 dark:border-emerald-950 text-[11px] text-muted-foreground px-2">
                 Firebase Authentication active (HttpOnly session secured).

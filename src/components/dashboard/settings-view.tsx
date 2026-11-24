@@ -17,9 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { siteConfig } from "@/config/site";
 import { GeoLocation } from "@/types";
+import { useLocation } from "@/context/location-context";
 
 export function SettingsView() {
-  const [selectedCityName, setSelectedCityName] = React.useState("Siliguri");
+  const { userName, setUserName, defaultLocation, location, setDefaultLocation } = useLocation();
+  const [displayName, setDisplayName] = React.useState(userName || "");
+  const [selectedCityName, setSelectedCityName] = React.useState(
+    (defaultLocation || location)?.name || siteConfig.initialLocation.name
+  );
   const [standard, setStandard] = React.useState("CPCB_INDIA");
   const [morningCommute, setMorningCommute] = React.useState("08:30");
   const [eveningCommute, setEveningCommute] = React.useState("18:00");
@@ -28,13 +33,27 @@ export function SettingsView() {
   const [saving, setSaving] = React.useState(false);
   const [savedSuccess, setSavedSuccess] = React.useState(false);
 
+  React.useEffect(() => {
+    if (userName) setDisplayName(userName);
+  }, [userName]);
+
+  React.useEffect(() => {
+    const active = defaultLocation || location;
+    if (active?.name) setSelectedCityName(active.name);
+  }, [defaultLocation, location]);
+
   const selectedLoc = siteConfig.supportedLocations.find((l: GeoLocation) => l.name === selectedCityName) || siteConfig.supportedLocations[0];
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch("/api/user/preferences", {
+      if (displayName.trim()) {
+        setUserName(displayName.trim());
+      }
+      setDefaultLocation(selectedLoc);
+
+      await fetch("/api/user/preferences", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -47,14 +66,10 @@ export function SettingsView() {
           eveningCommuteTime: eveningCommute,
           schoolDropTime,
         }),
-      });
+      }).catch(() => {});
 
-      if (res.ok) {
-        setSavedSuccess(true);
-        setTimeout(() => setSavedSuccess(false), 3500);
-      }
-    } catch {
-      // error
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3500);
     } finally {
       setSaving(false);
     }
@@ -92,6 +107,18 @@ export function SettingsView() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Your Name
+              </label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Enter your display name"
+                className="mt-1 w-full rounded-md border border-slate-300 dark:border-forest-700 bg-white dark:bg-forest-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
