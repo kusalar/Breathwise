@@ -6,6 +6,8 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   sendPasswordResetEmail,
   sendEmailVerification,
@@ -83,6 +85,27 @@ export async function loginWithEmailPassword(
     return { success: true, user: cred.user, idToken };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Authentication failed";
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Signs in a user using Google OAuth popup provider and retrieves their ID token.
+ */
+export async function loginWithGoogle(): Promise<ClientAuthResult> {
+  const auth = getFirebaseAuth();
+  if (!auth) {
+    return { success: false, error: "Firebase Client Auth is not initialized" };
+  }
+
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    const cred: UserCredential = await signInWithPopup(auth, provider);
+    const idToken = await cred.user.getIdToken();
+    return { success: true, user: cred.user, idToken };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Google authentication failed";
     return { success: false, error: message };
   }
 }

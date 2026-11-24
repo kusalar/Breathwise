@@ -41,7 +41,7 @@ async function getLiveTestCredentials() {
       });
 
   const auth = getAuth(app);
-  const email = "admin.jgechelper@gmail.com";
+  const email = process.env.TEST_USER_EMAIL || "admin.jgechelper@gmail.com";
   const user = await auth.getUserByEmail(email);
 
   // Generate compliant temporary password in memory - NEVER printed
@@ -67,7 +67,7 @@ test.describe("BreatheWise AI — Milestone 6J-C Live Application User Journeys"
     await expect(page.locator("h1")).toContainText("Sign In to BreatheWise AI");
 
     // 1a. Test invalid credentials rejection
-    await page.fill("#email", "admin.jgechelper@gmail.com");
+    await page.fill("#email", "invalid.user@breathewise.ai");
     await page.fill("#password", "CompletelyWrongPassword123!");
     await page.click("button[type='submit']");
 
