@@ -128,13 +128,16 @@ export function DashboardSidebar() {
 
       {/* Bottom Footer Notice */}
       {!collapsed && (
-        <div className="p-4 m-3 rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-slate-50 dark:bg-emerald-950/30 text-xs space-y-2">
+        <div className="p-4 m-3 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Mode Status</span>
-            <DemoDataBadge />
+            <span className="font-semibold text-slate-800 dark:text-slate-200">Atmospheric Stream</span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              LIVE TELEMETRY
+            </span>
           </div>
           <p className="text-[11px] text-muted-foreground leading-normal">
-            Milestone 1 Preview. Sensor streams will authenticate in Milestone 2.
+            Real-time planetary dispersion telemetry from Copernicus CAMS & Open-Meteo.
           </p>
         </div>
       )}

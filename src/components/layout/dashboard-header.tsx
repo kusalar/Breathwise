@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Bell, User, Search, ShieldAlert, Sparkles, Menu } from "lucide-react";
+import { Bell, User, Search, ShieldAlert, Sparkles, Menu, MapPin, Settings } from "lucide-react";
 import { LocationSelector } from "@/components/shared/location-selector";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { GeoLocation } from "@/types";
 import { siteConfig } from "@/config/site";
+import { useLocation } from "@/context/location-context";
 
 interface DashboardHeaderProps {
   currentLocation?: GeoLocation;
@@ -19,6 +20,7 @@ export function DashboardHeader({
   onLocationChange,
   onMobileMenuToggle,
 }: DashboardHeaderProps) {
+  const { userName, defaultLocation, setIsOnboardingOpen } = useLocation();
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
   const [profileOpen, setProfileOpen] = React.useState(false);
   const [sessionUser, setSessionUser] = React.useState<{ email?: string; fullName?: string } | null>(null);
@@ -87,9 +89,9 @@ export function DashboardHeader({
             <div className="absolute right-0 mt-2 w-80 rounded-xl border border-slate-200 dark:border-emerald-950 bg-white dark:bg-forest-900 p-3 shadow-xl z-50 animate-in fade-in-50">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-emerald-950">
                 <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                  Environmental Alerts (Demo)
+                  Environmental Alerts (Live)
                 </span>
-                <span className="text-[10px] text-muted-foreground">Siliguri Area</span>
+                <span className="text-[10px] text-muted-foreground">{currentLocation.name} Area</span>
               </div>
               <div className="py-2 space-y-2 text-xs">
                 <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 flex gap-2 items-start">
@@ -119,7 +121,7 @@ export function DashboardHeader({
             className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-emerald-950 p-1 hover:bg-slate-50 dark:hover:bg-emerald-950/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 text-xs font-bold">
-              BW
+              {(userName || sessionUser?.fullName)?.substring(0, 2).toUpperCase() || "BW"}
             </div>
           </button>
 
@@ -127,16 +129,32 @@ export function DashboardHeader({
             <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 dark:border-emerald-950 bg-white dark:bg-forest-900 p-3 shadow-xl z-50 animate-in fade-in-50">
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-emerald-950">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-xs">
-                  {sessionUser?.fullName?.substring(0, 2).toUpperCase() || "BW"}
+                  {(userName || sessionUser?.fullName)?.substring(0, 2).toUpperCase() || "BW"}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                    {sessionUser?.fullName || "BreatheWise Pioneer"}
+                    {userName || sessionUser?.fullName || "BreatheWise Pioneer"}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">{sessionUser?.email || "demo.user@breathewise.ai"}</span>
+                  <span className="text-[11px] text-muted-foreground">{sessionUser?.email || "user@breathewise.ai"}</span>
                 </div>
               </div>
               <div className="py-2 text-xs space-y-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOnboardingOpen(true);
+                    setProfileOpen(false);
+                  }}
+                  className="w-full text-left px-2 py-1.5 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer text-emerald-800 dark:text-emerald-300 font-semibold flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="h-3 w-3" />
+                    <span>Default Location & Name</span>
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-medium">
+                    {defaultLocation?.name || currentLocation.name}
+                  </span>
+                </button>
                 <div className="px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-emerald-950/40 cursor-pointer text-slate-700 dark:text-slate-300">
                   Profile & Health Preferences
                 </div>

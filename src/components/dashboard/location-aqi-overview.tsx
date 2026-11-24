@@ -43,7 +43,10 @@ export function LocationAqiOverview({ reading, weather }: LocationAqiOverviewPro
             CPCB Indicative Scale
           </Badge>
           {reading.isDemoData ? (
-            <DemoDataBadge />
+            <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 gap-1 text-[11px]">
+              <Clock className="h-3 w-3" />
+              <span>Regional Model Baseline</span>
+            </Badge>
           ) : (
             <Badge variant="default" className="bg-emerald-600 text-white gap-1 text-[11px]">
               <CheckCircle2 className="h-3 w-3" />

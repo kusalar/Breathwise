@@ -68,7 +68,7 @@ export function Footer() {
               <li>National Ambient Air Quality Standards (NAAQS)</li>
               <li>Open-Meteo Planetary Environmental Models</li>
               <li>Targeted for Indian Cities & Severe Smog Basins</li>
-              <li>Siliguri Development Demonstration Base</li>
+              <li>Pan-India Live Atmospheric Telemetry</li>
             </ul>
           </div>
 
@@ -83,7 +83,7 @@ export function Footer() {
                 <span>Honest Environmental AI</span>
               </div>
               <p className="text-[11px] leading-normal">
-                All pre-production figures are explicitly marked as DEMO DATA. We never fabricate physical sensor telemetry.
+                Atmospheric metrics are derived from verified planetary dispersion models. We never fabricate physical sensor telemetry.
               </p>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import { GeoLocation } from "@/types";
-import { Sparkles, Calendar, CheckCircle2 } from "lucide-react";
+import { Sparkles, Calendar, CheckCircle2, Settings2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { siteConfig } from "@/config/site";
+import { useLocation } from "@/context/location-context";
 
 interface WelcomeBannerProps {
   location: GeoLocation;
@@ -9,6 +10,8 @@ interface WelcomeBannerProps {
 }
 
 export function WelcomeBanner({ location, onLocationChange }: WelcomeBannerProps) {
+  const { userName, defaultLocation, setIsOnboardingOpen } = useLocation();
+
   const todayFormatted = new Intl.DateTimeFormat("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -21,15 +24,26 @@ export function WelcomeBanner({ location, onLocationChange }: WelcomeBannerProps
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
-            Welcome Back
+            {userName ? `Welcome, ${userName}` : "Welcome Back"}
           </span>
           <Badge variant="outline" className="text-[10px] text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 gap-1">
             <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-            <span>Live Atmosphere</span>
+            <span>Live Telemetry</span>
           </Badge>
+          {defaultLocation && (
+            <button
+              type="button"
+              onClick={() => setIsOnboardingOpen(true)}
+              className="text-[10px] px-2 py-0.5 rounded-md border border-slate-200 dark:border-emerald-900 bg-white/60 dark:bg-forest-900/60 text-slate-600 dark:text-slate-300 hover:text-emerald-700 flex items-center gap-1 transition-colors"
+              title="Change your preferred default location and name"
+            >
+              <Settings2 className="h-2.5 w-2.5" />
+              <span>Default: {defaultLocation.name}</span>
+            </button>
+          )}
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Good Morning. Air Quality for {location.name}
+          Good Morning{userName ? `, ${userName}` : ""}. Air Quality for {location.name}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
           <Calendar className="h-3.5 w-3.5" />

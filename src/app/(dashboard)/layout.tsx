@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { LocationProvider, useLocation } from "@/context/location-context";
+import { OnboardingModal } from "@/components/dashboard/onboarding-modal";
 
 const mobileNavItems = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -116,8 +117,9 @@ function DashboardLayoutInner({
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 dark:border-emerald-950 text-xs text-muted-foreground">
-              Demo baseline: Siliguri, WB
+            <div className="pt-4 border-t border-slate-100 dark:border-emerald-950 text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              <span>Active City: {location.name}, {location.region}</span>
             </div>
           </div>
           <div className="flex-1" onClick={() => setMobileSidebarOpen(false)} />
@@ -139,6 +141,9 @@ function DashboardLayoutInner({
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
+
+      {/* Default Location & User Name Onboarding Modal */}
+      <OnboardingModal />
     </div>
   );
 }

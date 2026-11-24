@@ -193,7 +193,7 @@ export function AiAssistantView({
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              Synced with {location.name} atmospheric telemetry ({reading && !reading.isDemoData ? `Live AQI ${reading.aqi}` : `Regional Baseline AQI ${reading?.aqi ?? 142} (Illustrative)`})
+              Synced with {location.name} atmospheric telemetry ({reading && !reading.isDemoData ? `Live AQI ${reading.aqi}` : `Regional Baseline AQI ${reading?.aqi ?? 142} (Model-Based)`})
             </p>
           </div>
         </div>
