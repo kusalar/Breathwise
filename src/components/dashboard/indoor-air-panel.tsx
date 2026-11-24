@@ -49,6 +49,22 @@ export function IndoorAirPanel() {
         </Badge>
       </div>
 
+      <div className="relative overflow-hidden rounded-xl border border-teal-200/60 dark:border-emerald-950 h-36 sm:h-44">
+        <img
+          src="/images/indoor-sanctuary.jpg"
+          alt="Clean indoor living room with air-purifying plants and HEPA filtration"
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/65 via-slate-950/20 to-transparent" />
+        <div className="absolute bottom-3 left-4 text-white">
+          <p className="text-xs font-bold">Indoor Sanctuary Protocol</p>
+          <p className="text-[11px] text-slate-200">
+            Combine midday cross-ventilation with elevated HEPA circulation
+          </p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {hacks.map((hack) => (
           <div

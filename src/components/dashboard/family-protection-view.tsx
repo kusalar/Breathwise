@@ -258,6 +258,28 @@ export function FamilyProtectionView() {
         </Button>
       </div>
 
+      {/* Visual Family Protection Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-200/70 dark:border-emerald-900/60 h-40 sm:h-48 shadow-subtle">
+        <img
+          src="/images/family-protection.jpg"
+          alt="Multi-generational Indian family protected in a clean-air home terrace"
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/35 to-transparent" />
+        <div className="absolute inset-y-0 left-5 flex flex-col justify-center max-w-md text-white space-y-1">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+            Household Shield Active
+          </span>
+          <h2 className="text-lg sm:text-xl font-extrabold leading-snug">
+            Personalized Safeguards for Every Generation
+          </h2>
+          <p className="text-xs text-slate-200">
+            Tailor AQI alert thresholds for children, seniors, and sensitive respiratory profiles.
+          </p>
+        </div>
+      </div>
+
       {/* Privacy Guarantee Banner */}
       <Alert className="border-emerald-200 dark:border-emerald-950/70 bg-emerald-50/50 dark:bg-emerald-950/20">
         <Lock className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
