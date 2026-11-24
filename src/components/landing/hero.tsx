@@ -80,6 +80,26 @@ export function Hero() {
 
         {/* Hero Interactive Preview Card */}
         <div className="mt-12 sm:mt-16 max-w-4xl mx-auto rounded-2xl border border-slate-200/90 dark:border-emerald-900/60 bg-white/95 dark:bg-forest-900/90 p-4 sm:p-6 shadow-xl backdrop-blur-sm">
+          <div className="relative mb-4 overflow-hidden rounded-xl border border-emerald-200/50 dark:border-emerald-900/50 h-44 sm:h-56">
+            <img
+              src="/images/hero-atmosphere.jpg"
+              alt="Serene Indian urban skyline transitioning from morning smog mist to clear midday air"
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
+            <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-semibold tracking-wide uppercase">
+                  Planetary Dispersion &amp; Smog Inversion Intelligence
+                </span>
+              </div>
+              <span className="hidden sm:inline-block text-[11px] font-mono bg-black/40 px-2 py-0.5 rounded-md backdrop-blur-xs">
+                Copernicus CAMS + Open-Meteo
+              </span>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-emerald-950">
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
