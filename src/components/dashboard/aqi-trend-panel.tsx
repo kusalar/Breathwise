@@ -34,12 +34,14 @@ export function AqiTrendPanel({ forecastData }: AqiTrendPanelProps) {
           };
         })
       : [
-          { label: "06:00 AM", aqi: 168, status: "Moderate (Elevated)", note: "Early morning inversion peak" },
-          { label: "09:00 AM", aqi: 154, status: "Moderate", note: "Vehicular morning traffic" },
-          { label: "12:00 PM", aqi: 118, status: "Moderate", note: "Solar thermal dispersion window" },
-          { label: "03:00 PM", aqi: 105, status: "Moderate (Optimal)", note: "Best air quality window" },
-          { label: "06:00 PM", aqi: 148, status: "Moderate", note: "Dusk temperature drop & rush" },
-          { label: "09:00 PM", aqi: 172, status: "Moderate (Elevated)", note: "Biomass heating & trapped air" },
+          { label: "12:00 AM", aqi: 185, status: "Moderate (Elevated)", note: "Nocturnal boundary layer inversion" },
+          { label: "03:00 AM", aqi: 195, status: "Moderate (Elevated)", note: "Overnight thermal stagnation" },
+          { label: "06:00 AM", aqi: 178, status: "Moderate (Elevated)", note: "Early morning inversion peak" },
+          { label: "09:00 AM", aqi: 162, status: "Moderate", note: "Vehicular morning traffic" },
+          { label: "12:00 PM", aqi: 122, status: "Moderate", note: "Solar thermal dispersion window" },
+          { label: "03:00 PM", aqi: 108, status: "Moderate (Optimal)", note: "Best air quality window" },
+          { label: "06:00 PM", aqi: 155, status: "Moderate", note: "Dusk temperature drop & rush" },
+          { label: "09:00 PM", aqi: 176, status: "Moderate (Elevated)", note: "Biomass heating & trapped air" },
         ];
 
   const maxAqi = Math.max(250, ...points.map((p) => p.aqi + 30));
@@ -86,24 +88,28 @@ export function AqiTrendPanel({ forecastData }: AqiTrendPanelProps) {
       </div>
 
       {/* Visual Accessible Bar/Column Trend Representation */}
-      <div className="pt-2">
-        <div className="grid grid-cols-6 gap-2 sm:gap-4 items-end h-44 sm:h-52 px-2 border-b border-slate-200 dark:border-emerald-950 pb-2">
+      <div className="pt-2 overflow-x-auto scrollbar-thin">
+        <div
+          className="flex items-end gap-1 sm:gap-2 h-44 sm:h-52 px-2 border-b border-slate-200 dark:border-emerald-950 pb-2"
+          style={{ minWidth: points.length > 8 ? `${points.length * 36}px` : "100%" }}
+        >
           {points.map((p) => {
             const heightPercent = Math.min(100, Math.round((p.aqi / maxAqi) * 100));
             const cat = getCPCBCategory(p.aqi);
 
             return (
-              <div key={p.label} className="flex flex-col items-center h-full justify-end group">
-                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 mb-1 opacity-80 group-hover:opacity-100 font-mono">
+              <div key={p.label} className="flex flex-col items-center flex-1 h-full justify-end group min-w-[24px]">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-200 mb-1 opacity-70 group-hover:opacity-100 font-mono">
                   {p.aqi}
                 </span>
                 <div
-                  className="w-full max-w-[48px] rounded-t-lg transition-all duration-300 relative group-hover:brightness-110"
+                  className="w-full max-w-[38px] rounded-t-md transition-all duration-300 relative group-hover:brightness-110 cursor-pointer"
                   style={{
                     height: `${heightPercent}%`,
                     backgroundColor: cat.colorHex,
                   }}
                   role="img"
+                  title={`${p.label}: AQI ${p.aqi} (${p.status}) - ${p.note}`}
                   aria-label={`${p.label}: AQI ${p.aqi}, ${p.status}. ${p.note}`}
                 />
               </div>
@@ -112,12 +118,18 @@ export function AqiTrendPanel({ forecastData }: AqiTrendPanelProps) {
         </div>
 
         {/* X-axis labels */}
-        <div className="grid grid-cols-6 gap-2 sm:gap-4 px-2 pt-2 text-center text-[11px] font-mono text-muted-foreground">
-          {points.map((p) => (
-            <div key={p.label} className="truncate">
-              {p.label}
-            </div>
-          ))}
+        <div
+          className="flex gap-1 sm:gap-2 px-2 pt-2 text-center text-[10px] sm:text-[11px] font-mono text-muted-foreground"
+          style={{ minWidth: points.length > 8 ? `${points.length * 36}px` : "100%" }}
+        >
+          {points.map((p) => {
+            const shortLabel = p.label.replace(":00", "");
+            return (
+              <div key={p.label} className="flex-1 min-w-[24px] truncate" title={p.label}>
+                {shortLabel}
+              </div>
+            );
+          })}
         </div>
       </div>
 

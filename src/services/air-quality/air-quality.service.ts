@@ -149,10 +149,21 @@ export class AirQualityService implements IAirQualityService {
       missingParameters: missing,
     };
 
-    // Build 6-point hourly trend curve
+    // Build 24-point diurnal hourly trend curve (full 24-hour cycle)
     const trendPoints: HourlyTrendPoint[] = [];
-    const startIndex = Math.max(0, currentIndex - 3);
-    const endIndex = Math.min(times.length, startIndex + 6);
+    const currentDayPrefix = times[currentIndex]?.slice(0, 10);
+    let startIndex = 0;
+    if (currentDayPrefix) {
+      const dayStart = times.findIndex((t) => t.startsWith(currentDayPrefix));
+      if (dayStart !== -1) {
+        startIndex = dayStart;
+      } else {
+        startIndex = Math.max(0, currentIndex >= 12 ? currentIndex - 12 : 0);
+      }
+    } else {
+      startIndex = Math.max(0, currentIndex >= 12 ? currentIndex - 12 : 0);
+    }
+    const endIndex = Math.min(times.length, startIndex + 24);
 
     for (let i = startIndex; i < endIndex; i++) {
       const rawP25 = hourly.pm2_5?.[i];
@@ -263,6 +274,18 @@ export class AirQualityService implements IAirQualityService {
         available: false,
         message: "Live API connection offline or timed out. Operating in demonstration mode.",
       },
+      hourlyForecast: Array.from({ length: 24 }, (_, i) => {
+        const hour = i;
+        const timeLabel = `${String(hour % 12 === 0 ? 12 : hour % 12).padStart(2, "0")}:00 ${hour >= 12 ? "PM" : "AM"}`;
+        const aqi = Math.max(40, Math.round(demoAqi + Math.sin((i / 24) * 2 * Math.PI) * 35));
+        return {
+          timestamp: new Date(Date.now() + (i - 12) * 3600000).toISOString(),
+          timeLabel,
+          aqi,
+          pm25: Math.round(aqi * 0.6),
+          pm10: Math.round(aqi * 1.1),
+        };
+      }),
       isDemoData: true,
       sourceAttribution: `BreatheWise Fallback Engine — DEMO DATA (${reason})`,
     };
