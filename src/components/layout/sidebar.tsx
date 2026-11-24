@@ -41,7 +41,7 @@ export function DashboardSidebar() {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col border-r border-slate-200 dark:border-emerald-950/70 bg-white dark:bg-forest-950 transition-all duration-300 select-none z-30 shrink-0",
+        "hidden md:flex sticky top-0 h-screen flex-col border-r border-slate-200 dark:border-emerald-950/70 bg-white dark:bg-forest-950 transition-all duration-300 select-none z-30 shrink-0",
         collapsed ? "w-20" : "w-64"
       )}
       aria-label="Dashboard Sidebar"

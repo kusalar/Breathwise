@@ -7,20 +7,23 @@ import { Wind, Droplets, Thermometer, Compass, Clock, ShieldAlert, Sparkles, Che
 interface LocationAqiOverviewProps {
   reading: AirQualityReading;
   weather: WeatherReading;
+  lastUpdated?: Date | null;
 }
 
-export function LocationAqiOverview({ reading, weather }: LocationAqiOverviewProps) {
+export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationAqiOverviewProps) {
   const categoryDetail = getCPCBCategory(reading.aqi);
 
-  // Format observation timestamp
-  const dateObj = new Date(reading.timestamp);
+  // Format observation / last-updated timestamp with date & time
+  const dateObj = lastUpdated ?? new Date(reading.timestamp);
   const formattedTime = !isNaN(dateObj.getTime())
     ? new Intl.DateTimeFormat("en-IN", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
         day: "numeric",
         month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
       }).format(dateObj)
     : reading.timestamp;
 

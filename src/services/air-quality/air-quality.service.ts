@@ -34,9 +34,14 @@ export class AirQualityService implements IAirQualityService {
    */
   async getCurrentReading(
     location: GeoLocation,
-    standard: AQIStandard = "CPCB_INDIA"
+    standard: AQIStandard = "CPCB_INDIA",
+    forceRefresh = false
   ): Promise<AirQualityReading> {
     const cacheKey = `aqi:${location.latitude.toFixed(3)}:${location.longitude.toFixed(3)}:${standard}`;
+
+    if (forceRefresh) {
+      environmentalCache.clear(cacheKey);
+    }
 
     return environmentalCache.getOrFetch(cacheKey, this.cacheTtlSeconds, async () => {
       try {
@@ -56,6 +61,7 @@ export class AirQualityService implements IAirQualityService {
         const response = await fetch(url.toString(), {
           signal: controller.signal,
           headers: { Accept: "application/json" },
+          cache: forceRefresh ? "no-store" : "default",
         });
 
         clearTimeout(timeoutId);

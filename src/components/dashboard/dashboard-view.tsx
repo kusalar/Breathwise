@@ -36,6 +36,7 @@ export function DashboardView({
   const [insight, setInsight] = React.useState<GeminiInsight | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   // Synchronize location context changes (e.g. from header selector or quick pills)
@@ -65,18 +66,20 @@ export function DashboardView({
 
     try {
       const [aqiData, weatherData] = await Promise.all([
-        airQualityService.getCurrentReading(loc),
-        weatherService.getCurrentWeather(loc),
+        airQualityService.getCurrentReading(loc, "CPCB_INDIA", isRefresh),
+        weatherService.getCurrentWeather(loc, isRefresh),
       ]);
 
       setReading(aqiData);
       setWeather(weatherData);
+      setLastUpdated(new Date());
 
       // Generate Gemini insight for this specific environmental snapshot
       const aiInsight = await geminiService.generateAirQualityInsight(
         aqiData,
         loc,
-        weatherData
+        weatherData,
+        isRefresh
       );
       setInsight(aiInsight);
     } catch (err) {
@@ -116,7 +119,7 @@ export function DashboardView({
             }}
           />
         </div>
-        <div className="self-end sm:self-center">
+        <div className="flex flex-col items-end gap-1.5 self-end sm:self-center">
           <Button
             variant="outline"
             size="sm"
@@ -128,11 +131,25 @@ export function DashboardView({
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-emerald-600" : ""}`} />
             <span>{refreshing ? "Syncing Telemetry..." : "Refresh Readings"}</span>
           </Button>
+          {lastUpdated && (
+            <span className="text-[11px] text-muted-foreground font-mono">
+              Last updated:{" "}
+              {new Intl.DateTimeFormat("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              }).format(lastUpdated)}
+            </span>
+          )}
         </div>
       </div>
 
       {/* B. Location and Air Quality Overview */}
-      <LocationAqiOverview reading={reading} weather={weather} />
+      <LocationAqiOverview reading={reading} weather={weather} lastUpdated={lastUpdated} />
 
       {/* C. Pollutant Metric Cards */}
       <PollutantCards pollutants={reading.pollutants} />

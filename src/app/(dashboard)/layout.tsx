@@ -59,7 +59,7 @@ function DashboardLayoutInner({
   const pathname = usePathname();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50/60 dark:bg-forest-950/60">
+    <div className="flex min-h-screen bg-slate-50/60 dark:bg-forest-950/60">
       {/* Desktop Sidebar */}
       <DashboardSidebar />
 
@@ -127,7 +127,7 @@ function DashboardLayoutInner({
       )}
 
       {/* Main Content Viewport */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col min-w-0">
         <DashboardHeader
           currentLocation={location}
           onLocationChange={(loc) => setLocation(loc)}
@@ -135,7 +135,7 @@ function DashboardLayoutInner({
         />
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 focus:outline-none"
+          className="flex-1 p-4 sm:p-6 lg:p-8 focus:outline-none"
           tabIndex={-1}
         >
           <div className="mx-auto max-w-7xl">{children}</div>

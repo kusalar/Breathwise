@@ -3,7 +3,7 @@ import { OpenMeteoWeatherResponseSchema } from "@/lib/validations/air-quality";
 import { environmentalCache } from "@/lib/cache/environmental-cache";
 
 export interface IWeatherService {
-  getCurrentWeather(location: GeoLocation): Promise<WeatherReading>;
+  getCurrentWeather(location: GeoLocation, forceRefresh?: boolean): Promise<WeatherReading>;
 }
 
 export class WeatherService implements IWeatherService {
@@ -20,8 +20,12 @@ export class WeatherService implements IWeatherService {
   /**
    * Retrieves current weather conditions from Open-Meteo Weather API.
    */
-  async getCurrentWeather(location: GeoLocation): Promise<WeatherReading> {
+  async getCurrentWeather(location: GeoLocation, forceRefresh = false): Promise<WeatherReading> {
     const cacheKey = `weather:${location.latitude.toFixed(3)}:${location.longitude.toFixed(3)}`;
+
+    if (forceRefresh) {
+      environmentalCache.clear(cacheKey);
+    }
 
     return environmentalCache.getOrFetch(cacheKey, this.cacheTtlSeconds, async () => {
       try {
@@ -40,6 +44,7 @@ export class WeatherService implements IWeatherService {
         const response = await fetch(url.toString(), {
           signal: controller.signal,
           headers: { Accept: "application/json" },
+          cache: forceRefresh ? "no-store" : "default",
         });
 
         clearTimeout(timeoutId);

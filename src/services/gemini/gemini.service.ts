@@ -330,10 +330,15 @@ export class GeminiService {
   async generateAirQualityInsight(
     reading: AirQualityReading,
     location: GeoLocation,
-    weather?: WeatherReading
+    weather?: WeatherReading,
+    forceRefresh = false
   ): Promise<GeminiInsight> {
     const dataQuality = this.calculateDataQualityScore(reading);
     const cacheKey = `gemini:insight:${location.latitude.toFixed(2)}:${location.longitude.toFixed(2)}:${reading.aqi}`;
+
+    if (forceRefresh) {
+      environmentalCache.clear(cacheKey);
+    }
 
     return environmentalCache.getOrFetch(cacheKey, 900, async () => {
       const insightPrompt = `
