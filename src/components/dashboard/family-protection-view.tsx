@@ -217,7 +217,6 @@ export function FamilyProtectionView() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this family profile?")) return;
     const updatedList = members.filter((m) => m.id !== id);
     setMembers(updatedList);
     writeLocalMembers(updatedList);
@@ -308,10 +307,11 @@ export function FamilyProtectionView() {
               )}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="member-name" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Full Name / Identifier
                   </label>
                   <input
+                    id="member-name"
                     type="text"
                     required
                     value={name}
@@ -322,10 +322,11 @@ export function FamilyProtectionView() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="member-relation" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Relationship
                   </label>
                   <select
+                    id="member-relation"
                     value={relation}
                     onChange={(e) => setRelation(e.target.value as HouseholdMember["relation"])}
                     className="mt-1 w-full rounded-md border border-slate-300 dark:border-forest-700 bg-white dark:bg-forest-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -339,10 +340,11 @@ export function FamilyProtectionView() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="member-age" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Age (Years)
                   </label>
                   <input
+                    id="member-age"
                     type="number"
                     min={0}
                     max={120}
@@ -355,10 +357,11 @@ export function FamilyProtectionView() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="member-vulnerability" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Vulnerability Level
                   </label>
                   <select
+                    id="member-vulnerability"
                     value={vulnerabilityLevel}
                     onChange={(e) => setVulnerabilityLevel(e.target.value as HouseholdMember["vulnerabilityLevel"])}
                     className="mt-1 w-full rounded-md border border-slate-300 dark:border-forest-700 bg-white dark:bg-forest-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -384,10 +387,11 @@ export function FamilyProtectionView() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="member-notes" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Special Care / Doctor Notes
                 </label>
                 <input
+                  id="member-notes"
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}

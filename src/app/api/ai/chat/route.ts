@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { geminiService } from "@/services/gemini/gemini.service";
 import { rateLimiter, getClientIp } from "@/lib/rate-limit";
 import { parseSafeJson, formatSafe500Response } from "@/lib/api-security";
+import { logger } from "@/lib/observability/logger";
 import { getFirebaseSessionUser } from "@/lib/firebase/session";
 import { chatRepository } from "@/services/firebase/firestore/chat.repository";
 import { z } from "zod";
@@ -144,7 +145,10 @@ export async function POST(request: NextRequest) {
         householdPreferences: parsed.data.householdPreferences,
       });
     } catch (aiErr) {
-      console.warn("[AiChatRoute] Primary/secondary AI service threw, activating safe fallback:", aiErr);
+      logger.warn("AiChatRoute", "Primary/secondary AI service threw, activating safe fallback", {
+        requestId: parsedBody.requestId,
+        meta: { error: aiErr instanceof Error ? aiErr.message : String(aiErr) },
+      });
       const fallback = geminiService.getContextualFallbackChatReply(
         {
           message: parsed.data.message,
