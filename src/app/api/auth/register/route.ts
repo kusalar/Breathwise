@@ -125,15 +125,16 @@ export async function POST(request: NextRequest) {
         },
         { status: 201 }
       );
-    } catch (createErr: any) {
-      if (createErr.code === "auth/email-already-exists") {
+    } catch (createErr: unknown) {
+      const errObj = createErr as { code?: string; message?: string };
+      if (errObj?.code === "auth/email-already-exists") {
         return NextResponse.json(
           { error: "An account with this email already exists", code: "EMAIL_EXISTS", requestId: parsedBody.requestId },
           { status: 409 }
         );
       }
       return NextResponse.json(
-        { error: createErr.message || "Registration failed", code: "REGISTRATION_FAILED", requestId: parsedBody.requestId },
+        { error: errObj?.message || "Registration failed", code: "REGISTRATION_FAILED", requestId: parsedBody.requestId },
         { status: 400 }
       );
     }

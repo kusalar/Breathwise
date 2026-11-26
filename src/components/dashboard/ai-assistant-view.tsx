@@ -157,7 +157,14 @@ export function AiAssistantView({
     setInput("");
     setLoading(true);
 
-    let aiData: any = null;
+    let aiData: {
+      reply: string;
+      dataQualityIndicator?: number;
+      dataSource?: string;
+      fallbackUsed?: boolean;
+      modelUsed?: string;
+      generationStatus?: string;
+    } | null = null;
 
     try {
       const response = await fetch("/api/ai/chat", {

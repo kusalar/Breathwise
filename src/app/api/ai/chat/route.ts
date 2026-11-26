@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (aiErr) {
       console.warn("[AiChatRoute] Primary/secondary AI service threw, activating safe fallback:", aiErr);
-      const fallback = (geminiService as any).getContextualFallbackChatReply(
+      const fallback = geminiService.getContextualFallbackChatReply(
         {
           message: parsed.data.message,
           location: parsed.data.location,

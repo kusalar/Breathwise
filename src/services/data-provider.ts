@@ -219,7 +219,7 @@ export class DataService {
     sessionId: string,
     role: "user" | "assistant" | "system",
     content: string,
-    metadata?: any
+    metadata?: Record<string, unknown>
   ) {
     this.ensureConfig();
     return chatRepository.addMessage(userId, sessionId, role, content, metadata);

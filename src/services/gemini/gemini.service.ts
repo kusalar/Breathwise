@@ -47,9 +47,34 @@ export interface FailoverEligibility {
  * Determines whether a primary Gemini error is an eligible transient failure
  * that qualifies for automated secondary model failover.
  */
+interface ErrorLike {
+  name?: string;
+  code?: string | number;
+  status?: number;
+  statusCode?: number;
+  message?: string;
+}
+
+interface ParsedInsightPayload {
+  headline?: string;
+  explanation?: string;
+  tailoredAction?: string;
+  situationSummary?: string;
+  recommendedActions?: string[];
+  actionsToAvoid?: string[];
+  practicalAlternatives?: string[];
+  environmentalImpact?: string;
+  uncertaintyNotes?: string;
+}
+
+function cleanEnvVar(value?: string): string | undefined {
+  return value?.replace(/^["']|["']$/g, "").trim();
+}
+
 export function isTransientFailoverEligible(error: unknown): FailoverEligibility {
   if (!error) return { eligible: false, reason: "UNKNOWN_ERROR" };
 
+  const errObj = error as ErrorLike;
   const errMsg = error instanceof Error ? error.message : String(error);
   const errName = error instanceof Error ? error.name : "";
 
@@ -58,13 +83,13 @@ export function isTransientFailoverEligible(error: unknown): FailoverEligibility
     errMsg.includes("timed out") ||
     errMsg.includes("abort") ||
     errName === "AbortError" ||
-    (error as any)?.name === "RequestAbortedError"
+    errObj?.name === "RequestAbortedError"
   ) {
     return { eligible: true, reason: "PRIMARY_REQUEST_TIMEOUT", statusCode: 408 };
   }
 
   // 2. Transient network transport failures
-  const errCode = (error as any)?.code;
+  const errCode = errObj?.code;
   if (
     errCode === "ECONNRESET" ||
     errCode === "ETIMEDOUT" ||
@@ -77,7 +102,7 @@ export function isTransientFailoverEligible(error: unknown): FailoverEligibility
   }
 
   // 3. Inspect HTTP status / ApiError structure
-  let status = (error as any)?.status || (error as any)?.statusCode;
+  let status = errObj?.status || errObj?.statusCode;
   if (!status) {
     try {
       if (errMsg.includes('"code":')) {
@@ -148,11 +173,11 @@ export class GeminiService {
   private readonly primaryTimeoutMs = 3500;
 
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY?.replace(/^["']|["']$/g, "").trim();
-    this.modelName = (process.env.GEMINI_MODEL || "gemini-3.5-flash-lite").replace(/^["']|["']$/g, "").trim();
-    this.fallbackModelName = (process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash").replace(/^["']|["']$/g, "").trim();
-    this.groqApiKey = process.env.GROQ_API_KEY?.replace(/^["']|["']$/g, "").trim();
-    this.groqModelName = (process.env.GROQ_MODEL || "openai/gpt-oss-120b").replace(/^["']|["']$/g, "").trim();
+    this.apiKey = cleanEnvVar(process.env.GEMINI_API_KEY);
+    this.modelName = cleanEnvVar(process.env.GEMINI_MODEL) || "gemini-3.5-flash-lite";
+    this.fallbackModelName = cleanEnvVar(process.env.GEMINI_FALLBACK_MODEL) || "gemini-3.5-flash";
+    this.groqApiKey = cleanEnvVar(process.env.GROQ_API_KEY);
+    this.groqModelName = cleanEnvVar(process.env.GROQ_MODEL) || "openai/gpt-oss-120b";
 
     if (this.apiKey && this.apiKey.length > 0) {
       try {
@@ -472,7 +497,7 @@ Provide response as a strict JSON object with:
   }
 
   private formatInsightResponse(
-    parsed: any,
+    parsed: ParsedInsightPayload,
     location: GeoLocation,
     dataQuality: number,
     modelName: string,
@@ -866,7 +891,7 @@ User Question: ${payload.message}
   /**
    * Fallback chat reply generator when GEMINI_API_KEY is not configured or in fallback mode.
    */
-  private getContextualFallbackChatReply(
+  public getContextualFallbackChatReply(
     payload: AiChatMessagePayload,
     dataQuality: number
   ): AiChatResponse {

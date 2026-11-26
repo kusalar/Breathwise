@@ -108,10 +108,11 @@ export function SettingsView() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label htmlFor="settings-display-name" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Your Name
               </label>
               <input
+                id="settings-display-name"
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -121,10 +122,11 @@ export function SettingsView() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="settings-base-city" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Select Base City
                 </label>
                 <select
+                  id="settings-base-city"
                   value={selectedCityName}
                   onChange={(e) => setSelectedCityName(e.target.value)}
                   className="mt-1 w-full rounded-md border border-slate-300 dark:border-forest-700 bg-white dark:bg-forest-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -138,10 +140,11 @@ export function SettingsView() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="settings-aqi-standard" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   AQI Standard Calculation Engine
                 </label>
                 <select
+                  id="settings-aqi-standard"
                   value={standard}
                   onChange={(e) => setStandard(e.target.value)}
                   className="mt-1 w-full rounded-md border border-slate-300 dark:border-forest-700 bg-white dark:bg-forest-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
