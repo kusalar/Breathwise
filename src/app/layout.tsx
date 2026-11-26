@@ -1,13 +1,46 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 
+const defaultTitle = `${siteConfig.name} — ${siteConfig.tagline}`;
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    default: defaultTitle,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: siteConfig.url,
+    title: defaultTitle,
+    description: siteConfig.description,
+    siteName: siteConfig.name,
+    images: [
+      {
+        url: "/images/hero-atmosphere.jpg",
+        width: 1200,
+        height: 630,
+        alt: "BreatheWise AI atmospheric dispersion and clean urban skyline",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultTitle,
+    description: siteConfig.description,
+    images: [
+      {
+        url: "/images/hero-atmosphere.jpg",
+        alt: "BreatheWise AI atmospheric dispersion and clean urban skyline",
+      },
+    ],
+  },
   keywords: [
     "Air Quality",
     "AQI India",
@@ -31,15 +64,36 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: siteConfig.name,
+        url: siteConfig.url,
+        logo: `${siteConfig.url}/images/hero-atmosphere.jpg`,
+        description: siteConfig.description,
+      },
+      {
+        "@type": "WebSite",
+        name: siteConfig.name,
+        url: siteConfig.url,
+        description: siteConfig.description,
+      },
+    ],
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               try {
@@ -53,6 +107,11 @@ export default function RootLayout({
               } catch (_) {}
             `,
           }}
+        />
+        <script
+          nonce={nonce}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </head>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased selection:bg-emerald-500/20">

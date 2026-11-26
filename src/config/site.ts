@@ -1,9 +1,9 @@
 export const siteConfig = {
   name: "BreatheWise AI",
-  tagline: "Breathe Smarter. Live Healthier. Breathe Better.",
+  tagline: "Air Quality & Health Companion",
   description:
-    "Your intelligent companion for navigating severe air pollution, protecting your family, and building a cleaner, more sustainable everyday life.",
-  url: "https://breathewise.ai",
+    "AI-powered air quality companion for Indian cities. Track live CPCB AQI, protect your family, and build low-emission daily routines.",
+  url: process.env.NEXT_PUBLIC_APP_URL || "https://breathewise-ai-cyan.vercel.app",
   links: {
     github: "https://github.com/breathewise/breathewise-ai",
     documentation: "/docs",

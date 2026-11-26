@@ -26,9 +26,9 @@ export function Footer() {
 
           {/* Solutions */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
               Solutions
-            </h4>
+            </h3>
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li>
                 <Link href="/dashboard" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
@@ -60,9 +60,9 @@ export function Footer() {
 
           {/* Standards & Regional */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
               Standards & Region
-            </h4>
+            </h3>
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li>Central Pollution Control Board (CPCB India)</li>
               <li>National Ambient Air Quality Standards (NAAQS)</li>
@@ -74,9 +74,9 @@ export function Footer() {
 
           {/* Project & Integrity */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
               Platform Integrity
-            </h4>
+            </h3>
             <div className="p-3 rounded-lg border border-slate-200 dark:border-emerald-950 bg-white/70 dark:bg-emerald-950/20 text-xs text-muted-foreground space-y-1.5">
               <div className="flex items-center gap-1.5 font-medium text-slate-900 dark:text-slate-200">
                 <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
@@ -94,7 +94,8 @@ export function Footer() {
           <p>© {new Date().getFullYear()} BreatheWise AI. Built for environmental health and community resilience.</p>
           <div className="flex items-center gap-1 text-slate-500">
             <span>Designed with</span>
-            <Heart className="h-3 w-3 text-rose-500 fill-rose-500" aria-label="care" />
+            <Heart className="h-3 w-3 text-rose-500 fill-rose-500" aria-hidden="true" />
+            <span className="sr-only">care</span>
             <span>for clean air across India & beyond</span>
           </div>
         </div>
