@@ -7,7 +7,7 @@ export default function IndoorAirPage() {
     <FeatureViewPlaceholder
       title="Indoor Air Quality Optimizer"
       subtitle="Engineering safe indoor sanctuaries against severe ambient pollution."
-      milestone="Milestone 2 Integration"
+      milestone="Indoor Sanctuary"
       description="Combines low-cost physical modifications, DIY air purifier filter guidelines, and smart IoT purifier integrations to ensure indoor particulate counts remain below safe thresholds."
       keyCapabilities={[
         "Purifier CADR calculator for room dimensions",

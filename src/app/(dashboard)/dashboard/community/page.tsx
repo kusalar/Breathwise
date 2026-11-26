@@ -7,7 +7,7 @@ export default function CommunityHubPage() {
     <FeatureViewPlaceholder
       title="Community Clean Air Hub"
       subtitle="Neighborhood clean-air initiatives, hyper-local sensor mesh, and citizen reports."
-      milestone="Milestone 2 Integration"
+      milestone="Community Network"
       description="Connects citizens in Siliguri and regional cities to report local biomass burnings, coordinate community carpooling, and mobilize neighborhood air-quality awareness drives."
       keyCapabilities={[
         "Geo-tagged pollution hotspot reporting",

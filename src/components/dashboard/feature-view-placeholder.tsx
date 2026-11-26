@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 interface FeatureViewPlaceholderProps {
   title: string;
   subtitle: string;
-  milestone: string;
+  milestone?: string;
   description: string;
   keyCapabilities: string[];
 }
@@ -14,7 +14,7 @@ interface FeatureViewPlaceholderProps {
 export function FeatureViewPlaceholder({
   title,
   subtitle,
-  milestone = "Milestone 2 Integration Target",
+  milestone = "Active Module",
   description,
   keyCapabilities,
 }: FeatureViewPlaceholderProps) {
@@ -70,7 +70,7 @@ export function FeatureViewPlaceholder({
         <div className="p-4 rounded-xl border border-emerald-100 dark:border-emerald-950 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <span>Service layer and database schemas have been architecturally specified in Milestone 1.</span>
+            <span>Live atmospheric telemetry, CPCB calibration, and cloud persistence are active.</span>
           </div>
           <Link href="/dashboard">
             <Button size="sm" variant="secondary">
