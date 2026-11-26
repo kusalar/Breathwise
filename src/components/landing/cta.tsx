@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, Wind } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function FinalCTA() {
   return (
@@ -25,23 +26,24 @@ export function FinalCTA() {
         </p>
 
         <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/dashboard" className="w-full sm:w-auto">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-forest-950 font-bold px-8 shadow-lg hover:shadow-xl transition-all gap-2"
-            >
-              <span>Explore The Dashboard</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+          <Link
+            href="/dashboard"
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-forest-950 font-bold px-8 shadow-lg hover:shadow-xl transition-all gap-2"
+            )}
+          >
+            <span>Explore The Dashboard</span>
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
-          <Link href="#features" className="w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto border-emerald-700 text-white hover:bg-emerald-800/50"
-            >
-              Read Feature Specifications
-            </Button>
+          <Link
+            href="#features"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "w-full sm:w-auto border-emerald-700 text-white hover:bg-emerald-800/50"
+            )}
+          >
+            Read Feature Specifications
           </Link>
         </div>
 

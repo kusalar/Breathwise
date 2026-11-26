@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Sparkles, Wind, Users, Activity } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { DemoDataBadge } from "@/components/shared/demo-data-badge";
 
@@ -38,23 +39,24 @@ export function Hero() {
 
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto pt-2">
-            <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium shadow-card hover:shadow-card-hover transition-all gap-2"
-              >
-                <span>Launch Interactive Demo</span>
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
+            <Link
+              href="/dashboard"
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium shadow-card hover:shadow-card-hover transition-all gap-2"
+              )}
+            >
+              <span>Launch Interactive Demo</span>
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <Link href="#features" className="w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto border-slate-300 dark:border-emerald-900 font-medium hover:bg-slate-50 dark:hover:bg-emerald-950/40"
-              >
-                Explore Architecture & Features
-              </Button>
+            <Link
+              href="#features"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "w-full sm:w-auto border-slate-300 dark:border-emerald-900 font-medium hover:bg-slate-50 dark:hover:bg-emerald-950/40"
+              )}
+            >
+              Explore Architecture & Features
             </Link>
           </div>
 

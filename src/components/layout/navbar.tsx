@@ -4,7 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { Wind, Menu, X, ArrowRight } from "lucide-react";
 import { siteConfig } from "@/config/site";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 export function Navbar() {
@@ -48,19 +49,24 @@ export function Navbar() {
         {/* Right Action Buttons */}
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          <Link href="/login" tabIndex={-1}>
-            <Button variant="ghost" size="sm" className="font-medium text-slate-700 dark:text-slate-200">
-              Sign In
-            </Button>
+          <Link
+            href="/login"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "font-medium text-slate-700 dark:text-slate-200"
+            )}
+          >
+            Sign In
           </Link>
-          <Link href="/dashboard">
-            <Button
-              size="sm"
-              className="bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium shadow-sm gap-1.5"
-            >
-              Get Started
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Button>
+          <Link
+            href="/dashboard"
+            className={cn(
+              buttonVariants({ size: "sm" }),
+              "bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium shadow-sm gap-1.5"
+            )}
+          >
+            Get Started
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </div>
 
@@ -104,16 +110,20 @@ export function Navbar() {
             ))}
           </div>
           <div className="pt-4 border-t border-slate-100 dark:border-emerald-900/60 flex flex-col gap-2.5">
-            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="outline" className="w-full justify-center">
-                Sign In
-              </Button>
+            <Link
+              href="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(buttonVariants({ variant: "outline" }), "w-full justify-center")}
+            >
+              Sign In
             </Link>
-            <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-              <Button className="w-full justify-center bg-emerald-700 text-white gap-2">
-                Get Started
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(buttonVariants(), "w-full justify-center bg-emerald-700 text-white gap-2")}
+            >
+              Get Started
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </div>
