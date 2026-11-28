@@ -15,7 +15,9 @@ import { rateLimiter, getClientIp } from "@/lib/rate-limit";
 import { chatRepository } from "@/services/firebase/firestore/chat.repository";
 import { geminiService } from "@/services/gemini/gemini.service";
 import * as firebaseSession from "@/lib/firebase/session";
+import { environmentalCache } from "@/lib/cache/environmental-cache";
 import { GeoLocation, AirQualityReading } from "@/types";
+import { stubOpenMeteoFetch } from "./fixtures/open-meteo";
 import fs from "fs";
 import path from "path";
 
@@ -30,7 +32,9 @@ const mockLocation: GeoLocation = {
 describe("Milestone 6J-H — Full Regression, Security & Production-Readiness Suite", () => {
   beforeEach(() => {
     rateLimiter.reset();
+    environmentalCache.clear();
     vi.restoreAllMocks();
+    stubOpenMeteoFetch();
   });
 
   describe("1. Chat Session Ownership & Authentication Verification Matrix", () => {

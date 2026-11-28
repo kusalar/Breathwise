@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { airQualityService } from "@/services/air-quality/air-quality.service";
 import { weatherService } from "@/services/weather/weather.service";
 import { geminiService } from "@/services/gemini/gemini.service";
@@ -15,9 +15,18 @@ import {
   AirQualityQuerySchema,
 } from "@/lib/validations/air-quality";
 import { siteConfig } from "@/config/site";
+import { stubOpenMeteoFetch } from "./fixtures/open-meteo";
 
 describe("Milestone 2 — Live Environmental Data & CPCB Integration", () => {
+  let fetchSpy: ReturnType<typeof stubOpenMeteoFetch>;
+
   beforeEach(() => {
+    environmentalCache.clear();
+    fetchSpy = stubOpenMeteoFetch();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
     environmentalCache.clear();
   });
 
@@ -113,6 +122,7 @@ describe("Milestone 2 — Live Environmental Data & CPCB Integration", () => {
   });
 
   it("AirQualityService falls back safely to structured response on network error", async () => {
+    fetchSpy.mockRejectedValueOnce(new Error("Simulated Open-Meteo network failure"));
     const invalidLocation = {
       name: "Test Location",
       region: "Region",
@@ -123,6 +133,7 @@ describe("Milestone 2 — Live Environmental Data & CPCB Integration", () => {
 
     const reading = await airQualityService.getCurrentReading(invalidLocation);
     expect(reading).toBeDefined();
+    expect(reading.isDemoData).toBe(true);
     expect(reading.aqi).toBeGreaterThan(0);
     expect(reading.sourceAttribution).toBeDefined();
     expect(reading.location.name).toBe("Test Location");
@@ -138,6 +149,16 @@ describe("Milestone 2 — Live Environmental Data & CPCB Integration", () => {
 });
 
 describe("Milestone 2 — Gemini AI Integration & Reliability", () => {
+  beforeEach(() => {
+    environmentalCache.clear();
+    stubOpenMeteoFetch();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    environmentalCache.clear();
+  });
+
   it("calculates transparent data quality score based on verified parameters (not hardcoded 94%)", () => {
     const reading = {
       location: siteConfig.initialLocation,

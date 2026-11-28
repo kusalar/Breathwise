@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import type {
   OpenMeteoAirQualityResponse,
   OpenMeteoWeatherResponse,
@@ -23,7 +24,7 @@ export function buildOpenMeteoAirQualityFixture(
   for (let i = 0; i < 48; i++) {
     const t = new Date(baseDate.getTime() + i * 3600_000);
     times.push(t.toISOString().slice(0, 16));
-    pm25.push(55 + (i % 6) * 4);
+    pm25.push(82 + (i % 6) * 4);
     pm10.push(110 + (i % 6) * 5);
     no2.push(28 + (i % 4) * 2);
     so2.push(9 + (i % 3));
@@ -71,4 +72,41 @@ export function buildOpenMeteoWeatherFixture(
     },
     ...overrides,
   };
+}
+
+/**
+ * Intercepts live Open-Meteo air-quality and weather HTTP requests in unit/component tests
+ * while forwarding any other URLs to the underlying fetch implementation.
+ */
+export function stubOpenMeteoFetch() {
+  const originalFetch = globalThis.fetch;
+  const aqFixture = buildOpenMeteoAirQualityFixture();
+  const weatherFixture = buildOpenMeteoWeatherFixture();
+
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockImplementation((input: string | URL | Request, init?: RequestInit) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+          ? input.toString()
+          : input.url;
+
+      if (url.includes("air-quality-api.open-meteo.com")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => aqFixture,
+        } as Response);
+      }
+
+      if (url.includes("api.open-meteo.com")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => weatherFixture,
+        } as Response);
+      }
+
+      return originalFetch(input, init);
+    });
 }

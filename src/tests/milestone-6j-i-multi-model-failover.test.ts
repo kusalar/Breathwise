@@ -24,7 +24,9 @@ import { POST } from "@/app/api/ai/chat/route";
 import { NextRequest } from "next/server";
 import * as firebaseSession from "@/lib/firebase/session";
 import { chatRepository } from "@/services/firebase/firestore/chat.repository";
+import { environmentalCache } from "@/lib/cache/environmental-cache";
 import { GeoLocation } from "@/types";
+import { stubOpenMeteoFetch } from "./fixtures/open-meteo";
 
 const mockLocation: GeoLocation = {
   name: "Siliguri",
@@ -37,7 +39,9 @@ const mockLocation: GeoLocation = {
 describe("Milestone 6J-I — Multi-Model Gemini Failover & AI Resilience Suite", () => {
   beforeEach(() => {
     rateLimiter.reset();
+    environmentalCache.clear();
     vi.restoreAllMocks();
+    stubOpenMeteoFetch();
   });
 
   describe("1. Bounded Multi-Model Failover Lifecycle (Scenarios 1-10)", () => {

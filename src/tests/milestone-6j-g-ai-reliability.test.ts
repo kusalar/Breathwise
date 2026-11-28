@@ -12,7 +12,9 @@ import { geminiService, GeminiService } from "@/services/gemini/gemini.service";
 import { rateLimiter } from "@/lib/rate-limit";
 import { POST } from "@/app/api/ai/chat/route";
 import { NextRequest } from "next/server";
+import { environmentalCache } from "@/lib/cache/environmental-cache";
 import { GeoLocation, AirQualityReading } from "@/types";
+import { stubOpenMeteoFetch } from "./fixtures/open-meteo";
 
 const mockLocation: GeoLocation = {
   name: "Siliguri",
@@ -25,7 +27,9 @@ const mockLocation: GeoLocation = {
 describe("Milestone 6J-G — Targeted AI Reliability Remediation Suite", () => {
   beforeEach(() => {
     rateLimiter.reset();
+    environmentalCache.clear();
     vi.restoreAllMocks();
+    stubOpenMeteoFetch();
   });
 
   describe("1. Gemini Request Cancellation, Timeout & Late-Response Discard", () => {

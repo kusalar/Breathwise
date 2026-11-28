@@ -1,12 +1,23 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { airQualityService } from "@/services/air-quality/air-quality.service";
 import { geminiService } from "@/services/gemini/gemini.service";
+import { environmentalCache } from "@/lib/cache/environmental-cache";
 import { getCPCBCategory } from "@/lib/constants/aqi-standards";
 import { GeoLocationSchema } from "@/lib/validations/location";
 import { PollutantValuesSchema } from "@/lib/validations/air-quality";
 import { siteConfig } from "@/config/site";
+import { stubOpenMeteoFetch } from "./fixtures/open-meteo";
 
 describe("Service Layer & Business Domain Tests", () => {
+  beforeEach(() => {
+    environmentalCache.clear();
+    stubOpenMeteoFetch();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    environmentalCache.clear();
+  });
   it("computes correct CPCB categories across all tiers", () => {
     expect(getCPCBCategory(30).category).toBe("good");
     expect(getCPCBCategory(80).category).toBe("satisfactory");

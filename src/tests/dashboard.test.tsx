@@ -1,8 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { DashboardSidebar } from "@/components/layout/sidebar";
 import { LocationSelector } from "@/components/shared/location-selector";
+import { environmentalCache } from "@/lib/cache/environmental-cache";
+import { stubOpenMeteoFetch } from "./fixtures/open-meteo";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -10,6 +12,15 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("Dashboard Foundation & Experience", () => {
+  beforeEach(() => {
+    environmentalCache.clear();
+    stubOpenMeteoFetch();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    environmentalCache.clear();
+  });
   it("renders the dashboard welcome banner targeting Siliguri baseline", async () => {
     render(<DashboardView />);
 
