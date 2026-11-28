@@ -5,7 +5,7 @@ import {
   WeatherReading,
   RoutineItem,
 } from "@/types";
-import type { AiChatMessagePayload, AiChatResponse } from "./gemini.service";
+import type { AiChatMessagePayload, AiChatResponse } from "./gemini.types";
 
 /**
  * Builds the standardized environmental & clinical safety prompt shared across

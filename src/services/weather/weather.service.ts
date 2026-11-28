@@ -27,7 +27,10 @@ export class WeatherService implements IWeatherService {
       environmentalCache.clear(cacheKey);
     }
 
-    return environmentalCache.getOrFetch(cacheKey, this.cacheTtlSeconds, async () => {
+    // Cache demo fallback data briefly so live weather is retried promptly after an outage.
+    const ttl = (reading: WeatherReading) => (reading.isDemoData ? 30 : this.cacheTtlSeconds);
+
+    return environmentalCache.getOrFetch(cacheKey, ttl, async () => {
       try {
         const url = new URL(this.baseUrl);
         url.searchParams.set("latitude", location.latitude.toString());

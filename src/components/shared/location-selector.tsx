@@ -5,6 +5,7 @@ import { MapPin, ChevronDown, Check, Compass, AlertCircle, Loader2 } from "lucid
 import { siteConfig } from "@/config/site";
 import { GeoLocation } from "@/types";
 import { cn } from "@/lib/utils";
+import { useEscapeKey } from "@/hooks/use-dismissable";
 
 interface LocationSelectorProps {
   currentLocation?: GeoLocation;
@@ -18,15 +19,18 @@ export function LocationSelector({
   className = "",
 }: LocationSelectorProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [selected, setSelected] = React.useState<GeoLocation>(currentLocation);
+  const [selectedOverride, setSelectedOverride] = React.useState<{
+    forProp: GeoLocation;
+    loc: GeoLocation;
+  } | null>(null);
   const [isLocating, setIsLocating] = React.useState(false);
   const [gpsError, setGpsError] = React.useState<string | null>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  // Keep internal state synced with prop
-  React.useEffect(() => {
-    setSelected(currentLocation);
-  }, [currentLocation]);
+  const selected =
+    selectedOverride && selectedOverride.forProp === currentLocation
+      ? selectedOverride.loc
+      : currentLocation;
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -39,8 +43,10 @@ export function LocationSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEscapeKey(isOpen, () => setIsOpen(false));
+
   const handleSelect = (loc: GeoLocation) => {
-    setSelected(loc);
+    setSelectedOverride({ forProp: currentLocation, loc });
     setGpsError(null);
     setIsOpen(false);
     if (onLocationChange) {
@@ -75,7 +81,7 @@ export function LocationSelector({
           isDemo: false,
         };
 
-        setSelected(detectedLocation);
+        setSelectedOverride({ forProp: currentLocation, loc: detectedLocation });
         setIsOpen(false);
         if (onLocationChange) {
           onLocationChange(detectedLocation);
@@ -100,7 +106,7 @@ export function LocationSelector({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        aria-haspopup="listbox"
+        aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-label={`Current location is ${selected.name}, ${selected.region}. Click to select a different city.`}
         className="flex items-center gap-2 rounded-lg border border-slate-200/90 dark:border-emerald-950/70 bg-white dark:bg-emerald-950/40 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 shadow-2xs hover:bg-slate-50 dark:hover:bg-emerald-900/30 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:outline-none"
@@ -117,7 +123,7 @@ export function LocationSelector({
 
       {isOpen && (
         <div
-          role="listbox"
+          role="dialog"
           aria-label="Select City or Region"
           className="absolute left-0 mt-2 w-80 origin-top-left rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-white dark:bg-forest-900 p-2.5 shadow-xl ring-1 ring-black/5 focus:outline-none z-50 animate-in fade-in-50 zoom-in-95"
         >
@@ -142,7 +148,7 @@ export function LocationSelector({
               )}
             </button>
             {gpsError && (
-              <div className="mt-1.5 p-2 rounded-md bg-amber-50 dark:bg-amber-950/40 text-[11px] text-amber-900 dark:text-amber-200 flex items-start gap-1.5">
+              <div className="mt-1.5 p-2 rounded-md bg-amber-50 dark:bg-amber-950/40 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-1.5">
                 <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
                 <span>{gpsError}</span>
               </div>
@@ -153,11 +159,12 @@ export function LocationSelector({
             Indian & Global Cities
           </div>
 
-          <div className="py-1 max-h-60 overflow-y-auto space-y-0.5">
+          <div role="listbox" aria-label="Cities" className="py-1 max-h-60 overflow-y-auto space-y-0.5">
             {siteConfig.supportedLocations.map((loc) => {
               const isCurrent = selected.name === loc.name;
               return (
                 <button
+                  type="button"
                   key={`${loc.name}-${loc.country}`}
                   role="option"
                   aria-selected={isCurrent}
@@ -173,7 +180,7 @@ export function LocationSelector({
                     <span className="font-medium text-slate-900 dark:text-slate-100">
                       {loc.name}
                       {loc.name === "Siliguri" && (
-                        <span className="ml-1.5 text-[10px] font-normal text-emerald-600 dark:text-emerald-400">
+                        <span className="ml-1.5 text-xs font-normal text-emerald-600 dark:text-emerald-400">
                           (Baseline)
                         </span>
                       )}
@@ -189,7 +196,7 @@ export function LocationSelector({
             })}
           </div>
 
-          <div className="pt-2 border-t border-slate-100 dark:border-emerald-950 px-2 py-1 text-[11px] text-muted-foreground">
+          <div className="pt-2 border-t border-slate-100 dark:border-emerald-950 px-2 py-1 text-xs text-muted-foreground">
             Coordinates are rounded to 4 decimals to protect personal privacy.
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { DemoDataBadge } from "@/components/shared/demo-data-badge";
 import { Badge } from "@/components/ui/badge";
-import { Wind, AlertTriangle, Info, Clock, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Clock } from "lucide-react";
 import { CPCB_CATEGORIES } from "@/lib/constants/aqi-standards";
 
 export function AirQualityPreview() {
@@ -85,7 +85,7 @@ export function AirQualityPreview() {
                   <div className="w-[20%] bg-red-500 opacity-40" title="Very Poor (301-400)" />
                   <div className="w-[20%] bg-rose-900 opacity-40" title="Severe (401-500)" />
                 </div>
-                <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                <div className="flex justify-between text-xs text-muted-foreground font-mono">
                   <span>0 Good</span>
                   <span>100</span>
                   <span className="font-bold text-amber-600 dark:text-amber-400">142</span>
@@ -99,7 +99,7 @@ export function AirQualityPreview() {
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                   <span>Sensitive Group Alert</span>
                 </div>
-                <p className="text-[11px] leading-relaxed">
+                <p className="text-xs leading-relaxed">
                   Breathing discomfort possible for individuals with asthma or cardiovascular conditions. Avoid high-intensity outdoor running.
                 </p>
               </div>
@@ -116,7 +116,7 @@ export function AirQualityPreview() {
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                       {item.name}
                     </span>
-                    <Badge variant={item.statusVariant} className="text-[10px] px-1.5 py-0">
+                    <Badge variant={item.statusVariant} className="text-xs px-1.5 py-0">
                       {item.status}
                     </Badge>
                   </div>
@@ -126,7 +126,7 @@ export function AirQualityPreview() {
                     </span>
                     <span className="text-xs text-muted-foreground ml-1">{item.unit}</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Standard limit: {item.standardLimit}
                   </span>
                 </div>
@@ -153,10 +153,10 @@ export function AirQualityPreview() {
                     />
                     <span className="text-slate-900 dark:text-slate-100">{cat.label}</span>
                   </div>
-                  <span className="text-[11px] font-mono text-muted-foreground">
+                  <span className="text-xs font-mono text-muted-foreground">
                     {cat.min} – {cat.max}
                   </span>
-                  <p className="text-[10px] text-muted-foreground line-clamp-2">
+                  <p className="text-xs text-muted-foreground line-clamp-2">
                     {cat.healthImplications}
                   </p>
                 </div>

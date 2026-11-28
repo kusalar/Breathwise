@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { geminiService } from "@/services/gemini/gemini.service";
+import { airQualityService } from "@/services/air-quality/air-quality.service";
+import { weatherService } from "@/services/weather/weather.service";
+import { RequestLocationSchema } from "@/lib/validations/location";
 import { rateLimiter, getClientIp } from "@/lib/rate-limit";
 import { parseSafeJson, formatSafe500Response } from "@/lib/api-security";
 import { logger } from "@/lib/observability/logger";
@@ -7,19 +10,24 @@ import { getFirebaseSessionUser } from "@/lib/firebase/session";
 import { chatRepository } from "@/services/firebase/firestore/chat.repository";
 import { z } from "zod";
 
+const ChatHistoryItemSchema = z.object({
+  role: z.enum(["user", "model"]),
+  parts: z.string().max(4000),
+});
+
+const HouseholdPreferencesSchema = z.object({
+  hasChildren: z.boolean().optional(),
+  hasElderly: z.boolean().optional(),
+  hasAsthma: z.boolean().optional(),
+});
+
+// Air-quality and weather readings are fetched server-side through the shared cache
+// so callers cannot poison model prompts with arbitrary telemetry.
 const ChatRequestSchema = z.object({
-  message: z.string().min(1).max(2000),
-  location: z.object({
-    name: z.string(),
-    region: z.string().default(""),
-    country: z.string().default("India"),
-    latitude: z.number(),
-    longitude: z.number(),
-  }),
-  reading: z.any().optional(),
-  weather: z.any().optional(),
-  history: z.array(z.any()).optional(),
-  householdPreferences: z.record(z.string(), z.any()).optional(),
+  message: z.string().trim().min(1).max(2000),
+  location: RequestLocationSchema,
+  history: z.array(ChatHistoryItemSchema).max(20).optional(),
+  householdPreferences: HouseholdPreferencesSchema.optional(),
   sessionId: z.string().optional(),
 });
 
@@ -134,13 +142,19 @@ export async function POST(request: NextRequest) {
       // Verified session ownership: session exists and belongs strictly to authenticated user.id derived from session cookie
     }
 
+    // Fetch authoritative server-side environmental context (cached per location)
+    const [reading, weather] = await Promise.all([
+      airQualityService.getCurrentReading(parsed.data.location),
+      weatherService.getCurrentWeather(parsed.data.location),
+    ]);
+
     let result;
     try {
       result = await geminiService.chat({
         message: parsed.data.message,
         location: parsed.data.location,
-        reading: parsed.data.reading,
-        weather: parsed.data.weather,
+        reading,
+        weather,
         history: parsed.data.history,
         householdPreferences: parsed.data.householdPreferences,
       });
@@ -153,8 +167,8 @@ export async function POST(request: NextRequest) {
         {
           message: parsed.data.message,
           location: parsed.data.location,
-          reading: parsed.data.reading,
-          weather: parsed.data.weather,
+          reading,
+          weather,
         },
         50
       );

@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { logger, generateRequestId } from "./observability/logger";
+import { rateLimiter, getClientIp, type RateLimitConfig } from "./rate-limit";
 
 const MAX_JSON_PAYLOAD_BYTES = 256 * 1024; // 256 KB max for normal API requests
 
@@ -71,6 +72,33 @@ export async function parseSafeJson<T>(
       ),
     };
   }
+}
+
+/**
+ * Applies a per-client sliding-window rate limit to a route.
+ * Returns a ready-to-send 429 response when over the limit, otherwise null.
+ */
+export function enforceRateLimit(
+  request: NextRequest,
+  scope: string,
+  config: RateLimitConfig
+): NextResponse | null {
+  const clientIp = getClientIp(request.headers);
+  const status = rateLimiter.check(`${scope}:${clientIp}`, config);
+  if (status.allowed) {
+    return null;
+  }
+
+  return NextResponse.json(
+    {
+      error: `Too many requests. Please retry in ${status.resetSeconds}s.`,
+      code: "RATE_LIMIT_EXCEEDED",
+    },
+    {
+      status: 429,
+      headers: { "Retry-After": String(status.resetSeconds) },
+    }
+  );
 }
 
 /**

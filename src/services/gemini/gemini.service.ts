@@ -12,43 +12,12 @@ import { logger } from "@/lib/observability/logger";
 import {
   buildEnvironmentalChatPrompt,
   buildRoutineFromTelemetry,
-  buildContextualFallbackInsight,
   buildContextualFallbackChatReply,
 } from "./gemini-fallbacks";
+import { synthesizeAirQualityInsight } from "./gemini-insight";
+import type { AiChatMessagePayload, AiChatResponse, FailoverEligibility } from "./gemini.types";
 
-export interface AiChatMessagePayload {
-  message: string;
-  location: GeoLocation;
-  reading?: AirQualityReading;
-  weather?: WeatherReading;
-  history?: Array<{ role: "user" | "model"; parts: string }>;
-  householdPreferences?: {
-    hasChildren?: boolean;
-    hasElderly?: boolean;
-    hasAsthma?: boolean;
-  };
-}
-
-export interface AiChatResponse {
-  reply: string;
-  dataQualityIndicator: number;
-  dataSource: string;
-  timestamp: string;
-  isDemoData: boolean;
-  uncertaintyNotes?: string;
-  modelUsed?: string;
-  primaryModel?: string;
-  fallbackUsed?: boolean;
-  fallbackReason?: string;
-  generationStatus?: "primary_success" | "fallback_success" | "deterministic_fallback";
-  durationMs?: number;
-}
-
-export interface FailoverEligibility {
-  eligible: boolean;
-  reason: string;
-  statusCode?: number;
-}
+export type { AiChatMessagePayload, AiChatResponse, FailoverEligibility } from "./gemini.types";
 
 /**
  * Determines whether a primary Gemini error is an eligible transient failure
@@ -60,18 +29,6 @@ interface ErrorLike {
   status?: number;
   statusCode?: number;
   message?: string;
-}
-
-interface ParsedInsightPayload {
-  headline?: string;
-  explanation?: string;
-  tailoredAction?: string;
-  situationSummary?: string;
-  recommendedActions?: string[];
-  actionsToAvoid?: string[];
-  practicalAlternatives?: string[];
-  environmentalImpact?: string;
-  uncertaintyNotes?: string;
 }
 
 function cleanEnvVar(value?: string): string | undefined {
@@ -255,7 +212,7 @@ export class GeminiService {
     timeoutMs = 4000,
     jsonMode = false
   ): Promise<string | null> {
-    const key = this.groqApiKey?.replace(/^["']|["']$/g, "").trim();
+    const key = this.groqApiKey;
     if (!key) return null;
 
     const candidateModels = [
@@ -376,171 +333,20 @@ export class GeminiService {
       environmentalCache.clear(cacheKey);
     }
 
-    return environmentalCache.getOrFetch(cacheKey, 900, async () => {
-      const insightPrompt = `
-You are the Chief Environmental Health Intelligence Agent of BreatheWise AI.
-Analyze the following verified atmospheric measurements for ${location.name}, ${location.region}, ${location.country}:
-
-Current AQI (Indicative CPCB Standard): ${reading?.aqi ?? 142} (${(reading?.category ?? "MODERATE").toUpperCase()})
-Dominant Pollutant: ${reading?.dominantPollutant ?? "PM2.5"}
-PM2.5: ${reading?.pollutants?.pm25 ?? "N/A"} µg/m³
-PM10: ${reading?.pollutants?.pm10 ?? "N/A"} µg/m³
-Weather: ${weather?.temperatureC ?? "N/A"}°C, Humidity: ${weather?.humidityPercent ?? "N/A"}%, Wind Speed: ${weather?.windSpeedKmh ?? "N/A"} km/h (${weather?.conditionText ?? "N/A"})
-Data Source: ${reading?.sourceAttribution ?? "Open-Meteo Environmental Telemetry"}
-
-STRICT RELIABILITY RULES:
-- Do not invent any numbers or pollutant values.
-- Distinguish observations from predictions.
-- Do not diagnose medical conditions.
-- Do not guarantee that an outdoor activity is 100% safe.
-- Focus on practical Indian urban realities (winter smog, temperature inversions, commute alternatives).
-
-Provide response as a strict JSON object with:
-{
-  "headline": "Short punchy summary",
-  "explanation": "Clear explanation of why pollution is at this level and what weather is doing",
-  "tailoredAction": "Specific priority action for right now",
-  "situationSummary": "1-2 sentence overview",
-  "recommendedActions": ["action 1", "action 2", "action 3"],
-  "actionsToAvoid": ["avoid 1", "avoid 2"],
-  "practicalAlternatives": ["alternative 1", "alternative 2"],
-  "environmentalImpact": "Avoided emissions estimate",
-  "uncertaintyNotes": "Statement about data confidence"
-}
-`;
-
-      if (this.client) {
-        const startTime = Date.now();
-        const totalDeadlineMs = this.requestTimeoutMs;
-        const primaryTimeoutMs = this.primaryTimeoutMs;
-
-        // 1. Attempt Primary Model
-        let primaryError: unknown = null;
-        try {
-          const response = await this.executeWithDeadline(
-            (signal) =>
-              this.client!.models.generateContent({
-                model: this.modelName,
-                contents: insightPrompt,
-                config: {
-                  responseMimeType: "application/json",
-                  temperature: 0.2,
-                  abortSignal: signal,
-                },
-              }),
-            primaryTimeoutMs,
-            `Gemini primary insight model (${this.modelName}) timed out after ${primaryTimeoutMs}ms`
-          );
-
-          const text = response.text?.trim();
-          if (text) {
-            const parsed = JSON.parse(text);
-            return this.formatInsightResponse(parsed, location, dataQuality, this.modelName, false);
-          }
-        } catch (e) {
-          primaryError = e;
-          logger.warn("GeminiService", `Primary insight generation (${this.modelName}) failed`, {
-            meta: { error: e instanceof Error ? e.message : String(e) },
-          });
-        }
-
-        // 2. Evaluate Transient Failover Eligibility
-        const failoverCheck = isTransientFailoverEligible(primaryError);
-        const elapsedMs = Date.now() - startTime;
-        const remainingMs = totalDeadlineMs - elapsedMs;
-        const minFallbackBudgetMs = Math.min(800, totalDeadlineMs * 0.2);
-
-        if (failoverCheck.eligible && remainingMs >= minFallbackBudgetMs) {
-          // Conservative Fallback Budget check (Max 10 requests/minute)
-          const fallbackRateLimit = rateLimiter.check("ai:insight:global:fallback", {
-            intervalMs: 60_000,
-            maxRequests: 10,
-          });
-
-          if (fallbackRateLimit.allowed) {
-            try {
-              logger.info(
-                "GeminiService",
-                `Triggering secondary failover for insight to ${this.fallbackModelName}`,
-                { meta: { reason: failoverCheck.reason, remainingMs } }
-              );
-
-              const response = await this.executeWithDeadline(
-                (signal) =>
-                  this.client!.models.generateContent({
-                    model: this.fallbackModelName,
-                    contents: insightPrompt,
-                    config: {
-                      responseMimeType: "application/json",
-                      temperature: 0.2,
-                      abortSignal: signal,
-                    },
-                  }),
-                remainingMs,
-                `Gemini fallback insight model (${this.fallbackModelName}) timed out after ${remainingMs}ms`
-              );
-
-              const text = response.text?.trim();
-              if (text) {
-                const parsed = JSON.parse(text);
-                return this.formatInsightResponse(parsed, location, dataQuality, this.fallbackModelName, true);
-              }
-            } catch (fallbackErr) {
-              logger.warn("GeminiService", `Secondary fallback insight model (${this.fallbackModelName}) failed`, {
-                meta: { error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr) },
-              });
-            }
-          }
-        }
-      }
-
-      // Groq Cloud Fallback if Gemini models fail
-      if (this.groqApiKey) {
-        try {
-          logger.info("GeminiService", "Attempting Groq secondary cloud failover for insight");
-          const groqJson = await this.executeGroqFallback(insightPrompt, 3500, true);
-          if (groqJson) {
-            const parsed = JSON.parse(groqJson);
-            return this.formatInsightResponse(parsed, location, dataQuality, `groq/${this.groqModelName}`, true);
-          }
-        } catch (groqErr) {
-          logger.warn("GeminiService", "Groq cloud fallback for insight failed", {
-            meta: { error: groqErr instanceof Error ? groqErr.message : String(groqErr) },
-          });
-        }
-      }
-
-      // Contextual generator fallback
-      return buildContextualFallbackInsight(reading, location, weather, dataQuality);
-    });
-  }
-
-  private formatInsightResponse(
-    parsed: ParsedInsightPayload,
-    location: GeoLocation,
-    dataQuality: number,
-    modelName: string,
-    fallbackUsed: boolean
-  ): GeminiInsight {
-    return {
-      id: `gemini-${Date.now()}`,
-      headline: parsed.headline || `Air Quality Summary for ${location.name}`,
-      explanation: parsed.explanation || "Atmospheric inversion layer is active.",
-      tailoredAction: parsed.tailoredAction || "Wear an N95 mask outdoors.",
-      situationSummary: parsed.situationSummary,
-      recommendedActions: parsed.recommendedActions || [],
-      actionsToAvoid: parsed.actionsToAvoid || [],
-      practicalAlternatives: parsed.practicalAlternatives || [],
-      environmentalImpact: parsed.environmentalImpact,
-      uncertaintyNotes: fallbackUsed
-        ? `Synthesized using secondary AI model (${modelName}) following primary model failover.`
-        : (parsed.uncertaintyNotes || "Based on Open-Meteo satellite and dispersion modeling."),
-      dataFreshnessText: "Updated within the last 15 minutes",
-      dataQualityMetric: dataQuality,
-      confidenceScore: dataQuality / 100,
-      generatedAt: new Date().toISOString(),
-      isDemoData: false,
-    };
+    return environmentalCache.getOrFetch(cacheKey, 900, () =>
+      synthesizeAirQualityInsight(reading, location, weather, dataQuality, {
+        client: this.client,
+        modelName: this.modelName,
+        fallbackModelName: this.fallbackModelName,
+        groqApiKey: this.groqApiKey,
+        groqModelName: this.groqModelName,
+        requestTimeoutMs: this.requestTimeoutMs,
+        primaryTimeoutMs: this.primaryTimeoutMs,
+        isTransientFailoverEligible,
+        executeWithDeadline: this.executeWithDeadline.bind(this),
+        executeGroqFallback: this.executeGroqFallback.bind(this),
+      })
+    );
   }
 
   /**

@@ -1,8 +1,7 @@
 import { AirQualityReading, WeatherReading } from "@/types";
 import { getCPCBCategory } from "@/lib/constants/aqi-standards";
 import { Badge } from "@/components/ui/badge";
-import { DemoDataBadge } from "@/components/shared/demo-data-badge";
-import { Wind, Droplets, Thermometer, Compass, Clock, ShieldAlert, Sparkles, CheckCircle2 } from "lucide-react";
+import { Wind, Droplets, Thermometer, Compass, Clock, Sparkles, CheckCircle2 } from "lucide-react";
 
 interface LocationAqiOverviewProps {
   reading: AirQualityReading;
@@ -46,12 +45,12 @@ export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationA
             CPCB Indicative Scale
           </Badge>
           {reading.isDemoData ? (
-            <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 gap-1 text-[11px]">
+            <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 gap-1 text-xs">
               <Clock className="h-3 w-3" />
               <span>Regional Model Baseline</span>
             </Badge>
           ) : (
-            <Badge variant="default" className="bg-emerald-600 text-white gap-1 text-[11px]">
+            <Badge variant="default" className="bg-emerald-600 text-white gap-1 text-xs">
               <CheckCircle2 className="h-3 w-3" />
               <span>Live Model-Based Estimate</span>
             </Badge>
@@ -64,7 +63,7 @@ export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationA
         <div className="md:col-span-5 flex flex-col items-start p-5 rounded-xl bg-slate-50 dark:bg-forest-950 border border-slate-100 dark:border-emerald-950/80">
           <div className="w-full flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground">Indicative Air Quality Index</span>
-            <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-mono">
+            <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
               <Clock className="h-3 w-3" />
               {formattedTime}
             </span>
@@ -95,7 +94,7 @@ export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationA
           </p>
 
           {/* Standard Distinction Badges */}
-          <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-emerald-950/80 w-full flex flex-wrap gap-2 text-[11px]">
+          <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-emerald-950/80 w-full flex flex-wrap gap-2 text-xs">
             {reading.usAqi !== undefined && (
               <span className="px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-forest-900 font-mono text-slate-700 dark:text-slate-300">
                 US EPA AQI: <strong>{reading.usAqi}</strong>
@@ -119,7 +118,7 @@ export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationA
             <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
               {weather.temperatureC}°C
             </p>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {weather.apparentTemperatureC !== undefined ? `Feels ${weather.apparentTemperatureC}°C` : "Ambient"}
             </span>
           </div>
@@ -132,7 +131,7 @@ export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationA
             <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
               {weather.humidityPercent}%
             </p>
-            <span className="text-[10px] text-muted-foreground">Particle retention</span>
+            <span className="text-xs text-muted-foreground">Particle retention</span>
           </div>
 
           <div className="p-3 rounded-xl border border-slate-100 dark:border-emerald-950 bg-slate-50/50 dark:bg-forest-950/40">
@@ -143,7 +142,7 @@ export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationA
             <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
               {weather.windSpeedKmh} km/h
             </p>
-            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
               {weather.windSpeedKmh < 8 ? "Stagnant Layer" : "Moderate Breeze"}
             </span>
           </div>
@@ -156,7 +155,7 @@ export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationA
             <p className="text-sm font-bold text-slate-900 dark:text-white mt-1 truncate" title={weather.conditionText}>
               {weather.conditionText}
             </p>
-            <span className="text-[10px] text-muted-foreground font-mono">
+            <span className="text-xs text-muted-foreground font-mono">
               Dir: {weather.windDirectionDegrees}° • UV: {weather.uvIndex}
             </span>
           </div>
@@ -174,7 +173,7 @@ export function LocationAqiOverview({ reading, weather, lastUpdated }: LocationA
             <span className="font-semibold text-slate-700 dark:text-slate-300">
               Data Quality: {reading.dataQuality.completeness}%
             </span>
-            <span className="text-[11px]">({reading.dataQuality.confidenceText})</span>
+            <span className="text-xs">({reading.dataQuality.confidenceText})</span>
           </div>
         )}
       </div>

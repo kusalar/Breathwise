@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth } from "./admin";
 import type { DecodedIdToken } from "firebase-admin/auth";
-import { logger, generateRequestId } from "@/lib/observability/logger";
+import { logger } from "@/lib/observability/logger";
 
 export const FIREBASE_SESSION_COOKIE_NAME = "breathewise_firebase_session";
 

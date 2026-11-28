@@ -1,6 +1,5 @@
 import { PollutantValues } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { formatMetric } from "@/lib/utils";
 
 interface PollutantCardsProps {
   pollutants: PollutantValues;
@@ -111,11 +110,11 @@ export function PollutantCards({ pollutants }: PollutantCardsProps) {
                 <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                   {card.code}
                 </span>
-                <Badge variant={card.statusVariant} className="text-[10px] px-1.5 py-0">
+                <Badge variant={card.statusVariant} className="text-xs px-1.5 py-0">
                   {card.status}
                 </Badge>
               </div>
-              <p className="text-[11px] text-muted-foreground truncate" title={card.name}>
+              <p className="text-xs text-muted-foreground truncate" title={card.name}>
                 {card.name}
               </p>
             </div>
@@ -125,11 +124,11 @@ export function PollutantCards({ pollutants }: PollutantCardsProps) {
                 {card.value !== null ? card.value : "N/A"}
               </span>
               {card.value !== null && (
-                <span className="text-[11px] text-muted-foreground ml-1">{card.unit}</span>
+                <span className="text-xs text-muted-foreground ml-1">{card.unit}</span>
               )}
             </div>
 
-            <span className="text-[10px] text-muted-foreground font-mono">
+            <span className="text-xs text-muted-foreground font-mono">
               Limit: {card.limit}
             </span>
           </div>

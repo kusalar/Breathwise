@@ -24,7 +24,7 @@ export interface ChatMessageData {
   userId: string;
   role: "user" | "assistant" | "system";
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -174,7 +174,7 @@ export class ChatRepository extends BaseFirestoreRepository {
     sessionId: string,
     role: "user" | "assistant" | "system",
     content: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, unknown> = {}
   ): Promise<{ success: boolean; data?: ChatMessageData; error?: string }> {
     if (!uid || !sessionId) return { success: false, error: "UID and sessionId required" };
     const messageId = randomUUID();
@@ -258,7 +258,7 @@ export class ChatRepository extends BaseFirestoreRepository {
       const results: ChatMessageData[] = [];
       for (const [key, msg] of Object.entries(BaseFirestoreRepository.mockStore.chatMessages)) {
         if (key.startsWith(`${sessionId}_`)) {
-          results.push(msg as ChatMessageData);
+          results.push(msg);
         }
       }
       return results.slice(0, limitCount);

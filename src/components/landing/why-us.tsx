@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Check, ShieldCheck, Heart, Sparkles, Scale, Compass } from "lucide-react";
 
 export function WhyUs() {
@@ -59,16 +60,17 @@ export function WhyUs() {
               </div>
             </div>
             <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-emerald-900/60 shadow-card h-52 sm:h-60">
-              <img
+              <Image
                 src="/images/indoor-sanctuary.jpg"
                 alt="Sunlit Indian living room with indoor air-purifying plants and HEPA filtration"
-                loading="lazy"
-                className="h-full w-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 560px"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
               <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white">
                 <span className="text-xs font-semibold">Indoor Clean-Air Sanctuary</span>
-                <span className="text-[10px] font-mono bg-emerald-700/80 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-mono bg-emerald-700/80 px-2 py-0.5 rounded-full">
                   HEPA + Natural Ventilation
                 </span>
               </div>

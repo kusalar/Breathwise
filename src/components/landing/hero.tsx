@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Sparkles, Wind, Users, Activity } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, ShieldCheck, Sparkles, Users, Activity } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -83,10 +84,13 @@ export function Hero() {
         {/* Hero Interactive Preview Card */}
         <div className="mt-12 sm:mt-16 max-w-4xl mx-auto rounded-2xl border border-slate-200/90 dark:border-emerald-900/60 bg-white/95 dark:bg-forest-900/90 p-4 sm:p-6 shadow-xl backdrop-blur-sm">
           <div className="relative mb-4 overflow-hidden rounded-xl border border-emerald-200/50 dark:border-emerald-900/50 h-44 sm:h-56">
-            <img
+            <Image
               src="/images/hero-atmosphere.jpg"
               alt="Serene Indian urban skyline transitioning from morning smog mist to clear midday air"
-              className="h-full w-full object-cover"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 480px"
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
             <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white">
@@ -96,7 +100,7 @@ export function Hero() {
                   Planetary Dispersion &amp; Smog Inversion Intelligence
                 </span>
               </div>
-              <span className="hidden sm:inline-block text-[11px] font-mono bg-black/40 px-2 py-0.5 rounded-md backdrop-blur-xs">
+              <span className="hidden sm:inline-block text-xs font-mono bg-black/40 px-2 py-0.5 rounded-md backdrop-blur-xs">
                 Copernicus CAMS + Open-Meteo
               </span>
             </div>
@@ -122,7 +126,7 @@ export function Hero() {
                   <Badge variant="warning" className="text-xs font-semibold">Moderate</Badge>
                 </div>
               </div>
-              <p className="text-[11px] text-amber-900/80 dark:text-amber-300/80 mt-2">
+              <p className="text-xs text-amber-900/80 dark:text-amber-300/80 mt-2">
                 Breathing discomfort to sensitive individuals on prolonged exposure. Primary culprit: PM2.5.
               </p>
             </div>
@@ -138,7 +142,7 @@ export function Hero() {
                   &ldquo;Winter inversion layer trapping smoke over Mahananda basin. Delay morning jogs until 10:30 AM when solar warming aids dispersion.&rdquo;
                 </p>
               </div>
-              <div className="mt-3 flex items-center justify-between text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+              <div className="mt-3 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                 <span>Confidence: 94%</span>
                 <span>Routine: Safe Shift</span>
               </div>
@@ -151,11 +155,11 @@ export function Hero() {
                 <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-1">
                   Shared E-Rickshaw vs Single Petrol Bike
                 </p>
-                <p className="text-[11px] text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Saves 1.8 kg CO₂ and eliminates direct street-level tailpipe exhaust along Sevoke Road.
                 </p>
               </div>
-              <div className="mt-3 flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+              <div className="mt-3 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
                 <span>Impact: -65% Personal Emissions</span>
               </div>
             </div>

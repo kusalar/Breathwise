@@ -61,7 +61,7 @@ export function DashboardUnavailableState({
         Telemetry Temporarily Unavailable for {stationName}
       </h3>
       <p className="text-xs text-muted-foreground max-w-md">{reason}</p>
-      <span className="text-[11px] text-amber-800 dark:text-amber-300 font-mono">
+      <span className="text-xs text-amber-800 dark:text-amber-300 font-mono">
         Fallback model running with historical regional averages.
       </span>
     </div>

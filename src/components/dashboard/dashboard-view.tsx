@@ -28,9 +28,11 @@ export function DashboardView({
   initialLocation,
 }: DashboardViewProps) {
   const { location: contextLocation, setLocation: setContextLocation } = useLocation();
-  const [location, setLocation] = React.useState<GeoLocation>(
-    initialLocation ?? contextLocation ?? siteConfig.initialLocation
-  );
+  const [locationOverride, setLocationOverride] = React.useState<{
+    forContext: GeoLocation | undefined;
+    forInitial: GeoLocation | undefined;
+    loc: GeoLocation;
+  } | null>(null);
   const [reading, setReading] = React.useState<AirQualityReading | null>(null);
   const [weather, setWeather] = React.useState<WeatherReading | null>(null);
   const [insight, setInsight] = React.useState<GeminiInsight | null>(null);
@@ -39,60 +41,86 @@ export function DashboardView({
   const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Synchronize location context changes (e.g. from header selector or quick pills)
-  React.useEffect(() => {
-    if (contextLocation) {
-      setLocation(contextLocation);
-    }
-  }, [contextLocation]);
+  const location =
+    locationOverride &&
+    locationOverride.forContext === contextLocation &&
+    locationOverride.forInitial === initialLocation
+      ? locationOverride.loc
+      : initialLocation ?? contextLocation ?? siteConfig.initialLocation;
 
-  // Synchronize location prop changes if passed explicitly
-  React.useEffect(() => {
-    if (initialLocation) {
-      setLocation(initialLocation);
-    }
-  }, [initialLocation]);
-
-  /**
-   * Fetch live environmental readings and AI insights for the active location
-   */
-  const loadEnvironmentalData = React.useCallback(async (loc: GeoLocation, isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-
-    try {
+  const fetchEnvironmentalSnapshot = React.useCallback(
+    async (loc: GeoLocation, isRefresh = false) => {
       const [aqiData, weatherData] = await Promise.all([
         airQualityService.getCurrentReading(loc, "CPCB_INDIA", isRefresh),
         weatherService.getCurrentWeather(loc, isRefresh),
       ]);
-
-      setReading(aqiData);
-      setWeather(weatherData);
-      setLastUpdated(new Date());
-
-      // Generate Gemini insight for this specific environmental snapshot
       const aiInsight = await geminiService.generateAirQualityInsight(
         aqiData,
         loc,
         weatherData,
         isRefresh
       );
-      setInsight(aiInsight);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load environmental data");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+      return { aqiData, weatherData, aiInsight };
+    },
+    []
+  );
+
+  /**
+   * Fetch live environmental readings and AI insights for the active location
+   */
+  const loadEnvironmentalData = React.useCallback(
+    async (loc: GeoLocation, isRefresh = false) => {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+
+      try {
+        const { aqiData, weatherData, aiInsight } = await fetchEnvironmentalSnapshot(
+          loc,
+          isRefresh
+        );
+        setReading(aqiData);
+        setWeather(weatherData);
+        setLastUpdated(new Date());
+        setInsight(aiInsight);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load environmental data");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [fetchEnvironmentalSnapshot]
+  );
 
   React.useEffect(() => {
-    loadEnvironmentalData(location);
-  }, [location, loadEnvironmentalData]);
+    let cancelled = false;
+    fetchEnvironmentalSnapshot(location, false)
+      .then(({ aqiData, weatherData, aiInsight }) => {
+        if (cancelled) return;
+        setReading(aqiData);
+        setWeather(weatherData);
+        setLastUpdated(new Date());
+        setInsight(aiInsight);
+        setError(null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load environmental data");
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+        setRefreshing(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location, fetchEnvironmentalSnapshot]);
 
   if (loading && !reading) {
     return <DashboardLoadingSkeleton />;
@@ -114,7 +142,11 @@ export function DashboardView({
           <WelcomeBanner
             location={location}
             onLocationChange={(newLoc) => {
-              setLocation(newLoc);
+              setLocationOverride({
+                forContext: contextLocation,
+                forInitial: initialLocation,
+                loc: newLoc,
+              });
               setContextLocation(newLoc);
             }}
           />
@@ -132,7 +164,7 @@ export function DashboardView({
             <span>{refreshing ? "Syncing Telemetry..." : "Refresh Readings"}</span>
           </Button>
           {lastUpdated && (
-            <span className="text-[11px] text-muted-foreground font-mono">
+            <span className="text-xs text-muted-foreground font-mono">
               Last updated:{" "}
               {new Intl.DateTimeFormat("en-IN", {
                 day: "numeric",

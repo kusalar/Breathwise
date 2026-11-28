@@ -18,7 +18,7 @@
  * 15. Recursive account cascade purge
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { dataService } from "@/services/data-provider";
 import { BaseFirestoreRepository } from "@/services/firebase/firestore";
 import {
@@ -200,13 +200,17 @@ describe("Milestone 6I-E — Architecture Security Certification Suite", () => {
   });
 
   describe("Phase 8 Application Security & CSP Audits", () => {
-    it("11. Verifies next.config.mjs Content-Security-Policy contains zero Supabase endpoints", () => {
+    it("11. Verifies security CSP configuration contains zero Supabase endpoints and includes Firebase auth endpoints", () => {
       const configPath = path.join(process.cwd(), "next.config.mjs");
       const config = fs.readFileSync(configPath, "utf-8");
+      const cspPath = path.join(process.cwd(), "src", "lib", "security", "csp.ts");
+      const csp = fs.readFileSync(cspPath, "utf-8");
 
       expect(config).not.toContain("supabase.co");
-      expect(config).toContain("identitytoolkit.googleapis.com");
-      expect(config).toContain("securetoken.googleapis.com");
+      expect(csp).not.toContain("supabase.co");
+      expect(csp).toContain("identitytoolkit.googleapis.com");
+      expect(csp).toContain("securetoken.googleapis.com");
+      expect(csp).not.toContain("'unsafe-inline'");
     });
 
     it("12. Verifies HSTS security header configuration", () => {
@@ -234,18 +238,35 @@ describe("Milestone 6I-E — Architecture Security Certification Suite", () => {
     });
 
     it("14. Air quality service provides non-official CPCB disclaimer and Copernicus attribution", async () => {
-      const reading = await airQualityService.getCurrentReading({
-        name: "Siliguri",
-        region: "West Bengal",
-        country: "India",
-        latitude: 26.7271,
-        longitude: 88.3953,
-      });
+      const { buildOpenMeteoAirQualityFixture } = await import("./fixtures/open-meteo");
+      const { environmentalCache } = await import("@/lib/cache/environmental-cache");
+      environmentalCache.clear();
 
-      expect(reading.sourceAttribution).toContain("Open-Meteo Air Quality API");
-      expect(reading.officialStationStatus?.available).toBe(false);
-      expect(reading.officialStationStatus?.message).toContain("Official CPCB real-time ground monitor station API connection requires regional CAAQMS sensor hookup");
-      expect(reading.standardUsed).toBe("CPCB_INDICATIVE");
+      const fixture = buildOpenMeteoAirQualityFixture();
+      const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => fixture,
+      } as Response);
+
+      try {
+        const reading = await airQualityService.getCurrentReading({
+          name: "Siliguri",
+          region: "West Bengal",
+          country: "India",
+          latitude: 26.7271,
+          longitude: 88.3953,
+        });
+
+        expect(reading.sourceAttribution).toContain("Open-Meteo Air Quality API");
+        expect(reading.officialStationStatus?.available).toBe(false);
+        expect(reading.officialStationStatus?.message).toContain(
+          "Official CPCB real-time ground monitor station API connection requires regional CAAQMS sensor hookup"
+        );
+        expect(reading.standardUsed).toBe("CPCB_INDICATIVE");
+      } finally {
+        fetchSpy.mockRestore();
+        environmentalCache.clear();
+      }
     });
 
     it("15. Enforces bounded limits on collection reads to protect Firebase Spark quotas", async () => {

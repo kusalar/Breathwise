@@ -57,7 +57,7 @@ export function AqiTrendPanel({ forecastData }: AqiTrendPanelProps) {
             Projected cycle showing real-time atmospheric changes and optimal ventilation windows
           </p>
         </div>
-        <Badge variant="outline" className="text-[10px] text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
+        <Badge variant="outline" className="text-xs text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
           Hourly Telemetry
         </Badge>
       </div>
@@ -99,7 +99,7 @@ export function AqiTrendPanel({ forecastData }: AqiTrendPanelProps) {
 
             return (
               <div key={p.label} className="flex flex-col items-center flex-1 h-full justify-end group min-w-[24px]">
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-200 mb-1 opacity-70 group-hover:opacity-100 font-mono">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 mb-1 opacity-70 group-hover:opacity-100 font-mono">
                   {p.aqi}
                 </span>
                 <div
@@ -119,7 +119,7 @@ export function AqiTrendPanel({ forecastData }: AqiTrendPanelProps) {
 
         {/* X-axis labels */}
         <div
-          className="flex gap-1 sm:gap-2 px-2 pt-2 text-center text-[10px] sm:text-[11px] font-mono text-muted-foreground"
+          className="flex gap-1 sm:gap-2 px-2 pt-2 text-center text-xs font-mono text-muted-foreground"
           style={{ minWidth: points.length > 8 ? `${points.length * 36}px` : "100%" }}
         >
           {points.map((p) => {

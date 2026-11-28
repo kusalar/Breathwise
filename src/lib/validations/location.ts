@@ -18,3 +18,17 @@ export const LocationQuerySchema = z.object({
 export type GeoLocationInput = z.infer<typeof GeoLocationSchema>;
 export type LocationQueryInput = z.infer<typeof LocationQuerySchema>;
 
+/**
+ * Location payload accepted by AI and environmental API routes.
+ * Enforces trimmed non-empty names and valid geographic coordinates.
+ */
+export const RequestLocationSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  region: z.string().trim().max(100).default(""),
+  country: z.string().trim().max(100).default("India"),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+export type RequestLocation = z.infer<typeof RequestLocationSchema>;
+

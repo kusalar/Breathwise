@@ -4,7 +4,7 @@
  */
 
 import { BaseFirestoreRepository } from "./base.repository";
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 
 export interface UserProfileData {
   uid: string;
@@ -29,12 +29,15 @@ export class UserRepository extends BaseFirestoreRepository {
       if (!mock) return null;
       return {
         uid,
-        email: mock.email || `${uid}@breathewise.ai`,
-        displayName: mock.displayName || mock.fullName || "BreatheWise User",
-        avatarUrl: mock.avatarUrl,
+        email: typeof mock.email === "string" && mock.email ? mock.email : `${uid}@breathewise.ai`,
+        displayName:
+          (typeof mock.displayName === "string" && mock.displayName) ||
+          (typeof mock.fullName === "string" && mock.fullName) ||
+          "BreatheWise User",
+        avatarUrl: typeof mock.avatarUrl === "string" ? mock.avatarUrl : undefined,
         emailVerified: Boolean(mock.emailVerified),
-        createdAt: mock.createdAt || new Date().toISOString(),
-        updatedAt: mock.updatedAt || new Date().toISOString(),
+        createdAt: typeof mock.createdAt === "string" ? mock.createdAt : new Date().toISOString(),
+        updatedAt: typeof mock.updatedAt === "string" ? mock.updatedAt : new Date().toISOString(),
       };
     }
 

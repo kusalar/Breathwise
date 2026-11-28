@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { IndoorAirView } from "@/components/dashboard/indoor-air-view";
 import { CommunityHubView } from "@/components/dashboard/community-hub-view";
 import { LocationProvider } from "@/context/location-context";
@@ -7,6 +7,18 @@ import { LocationProvider } from "@/context/location-context";
 describe("Frontend Alignment & Interactive Views", () => {
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem("breathewise_onboarding_completed", "true");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ authenticated: false }),
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("IndoorAirView calculates HEPA CADR dynamically from room dimensions", () => {
@@ -31,7 +43,7 @@ describe("Frontend Alignment & Interactive Views", () => {
     expect(screen.getByText("1/5 Done")).toBeTruthy();
   });
 
-  it("CommunityHubView allows submitting hotspot reports and toggling clean-air pledges", () => {
+  it("CommunityHubView allows submitting hotspot reports and toggling clean-air pledges", async () => {
     render(
       <LocationProvider>
         <CommunityHubView />
@@ -51,5 +63,9 @@ describe("Frontend Alignment & Interactive Views", () => {
     const pledgeBtn = screen.getByRole("button", { name: /Zero Dry-Leaf Burning/i });
     fireEvent.click(pledgeBtn);
     expect(pledgeBtn.getAttribute("aria-pressed")).toBe("true");
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/auth/session");
+    });
   });
 });

@@ -5,18 +5,23 @@
  */
 
 import { getAdminFirestore } from "@/lib/firebase/admin";
-import { FieldValue, Timestamp, type Firestore } from "firebase-admin/firestore";
+import { Timestamp, type Firestore } from "firebase-admin/firestore";
 import { logger } from "@/lib/observability/logger";
+import type { HouseholdMember, SavedRoutine, SustainabilityAction } from "@/types";
+import type { ChatMessageData, ChatSessionData } from "./chat.repository";
+import type { NotificationPreferencesData } from "./notifications.repository";
+import type { UserPreferencesData } from "./preferences.repository";
+import type { UserProfileData } from "./user.repository";
 
 export interface MockFirestoreStore {
-  profiles: Record<string, Record<string, any>>;
-  preferences: Record<string, Record<string, any>>;
-  householdMembers: Record<string, Record<string, any>>;
-  savedRoutines: Record<string, Record<string, any>>;
-  chatSessions: Record<string, Record<string, any>>;
-  chatMessages: Record<string, Record<string, any>>; // keyed by sessionId_messageId
-  sustainabilityActions: Record<string, Record<string, any>>;
-  notificationPreferences: Record<string, Record<string, any>>;
+  profiles: Record<string, Partial<UserProfileData> & { fullName?: string }>;
+  preferences: Record<string, UserPreferencesData>;
+  householdMembers: Record<string, Record<string, HouseholdMember>>;
+  savedRoutines: Record<string, Record<string, SavedRoutine>>;
+  chatSessions: Record<string, Record<string, ChatSessionData>>;
+  chatMessages: Record<string, ChatMessageData>; // keyed by sessionId_messageId
+  sustainabilityActions: Record<string, Record<string, SustainabilityAction>>;
+  notificationPreferences: Record<string, NotificationPreferencesData>;
 }
 
 export abstract class BaseFirestoreRepository {
@@ -52,7 +57,14 @@ export abstract class BaseFirestoreRepository {
    * Returns whether the Admin Firestore instance is configured and active.
    */
   protected getDb(): Firestore | null {
-    return getAdminFirestore();
+    const db = getAdminFirestore();
+    if (!db && process.env.NODE_ENV === "production") {
+      // Never silently fall back to ephemeral in-memory storage in production.
+      throw new Error(
+        "Firestore Admin is not configured; refusing to use the in-memory store in production."
+      );
+    }
+    return db;
   }
 
   /**

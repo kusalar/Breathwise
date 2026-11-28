@@ -4,9 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Wind, Lock, Mail, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { loginWithGoogle } from "@/lib/firebase/auth";
+import { logger } from "@/lib/observability/logger";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,10 +70,10 @@ export default function LoginPage() {
         }
 
         if (!response.ok && data?.error) {
-          console.warn("Server session establishment notice:", data.error);
+          logger.warn("LoginPage", "Server session establishment notice", { meta: { error: data.error } });
         }
       } catch (sessionErr) {
-        console.warn("Server session endpoint not reachable, continuing with authenticated client session:", sessionErr);
+        logger.warn("LoginPage", "Server session endpoint not reachable, continuing with authenticated client session", { meta: { error: sessionErr instanceof Error ? sessionErr.message : String(sessionErr) } });
       }
 
       setSuccess(true);
@@ -138,10 +140,11 @@ export default function LoginPage() {
         </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm">
-              Explore Demo
-            </Button>
+          <Link
+            href="/dashboard"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
+            Explore Demo
           </Link>
         </div>
       </header>
@@ -219,7 +222,7 @@ export default function LoginPage() {
 
             <div className="relative flex items-center justify-center">
               <div className="w-full border-t border-slate-200 dark:border-emerald-950/80" />
-              <span className="absolute bg-white dark:bg-forest-900 px-3 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+              <span className="absolute bg-white dark:bg-forest-900 px-3 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
                 Or continue with email
               </span>
             </div>

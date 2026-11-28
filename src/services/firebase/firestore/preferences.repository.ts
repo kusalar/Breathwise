@@ -46,7 +46,7 @@ export class PreferencesRepository extends BaseFirestoreRepository {
           theme: "system",
         };
       }
-      return mock as UserPreferencesData;
+      return mock as unknown as UserPreferencesData;
     }
 
     try {

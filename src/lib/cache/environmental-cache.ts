@@ -1,6 +1,9 @@
 /**
  * Lightweight in-memory server-side cache with in-flight request deduplication
  * Designed for external environmental API calls (Open-Meteo & Gemini).
+ *
+ * The cache is bounded: expired entries are swept on overflow and the oldest
+ * entries are evicted once `maxEntries` is reached.
  */
 
 interface CacheEntry<T> {
@@ -8,16 +11,23 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
-class EnvironmentalCache {
+export type TtlSeconds<T> = number | ((result: T) => number);
+
+const DEFAULT_MAX_ENTRIES = 500;
+
+export class EnvironmentalCache {
   private cache = new Map<string, CacheEntry<unknown>>();
   private inFlight = new Map<string, Promise<unknown>>();
 
+  constructor(private readonly maxEntries: number = DEFAULT_MAX_ENTRIES) {}
+
   /**
    * Retrieves an item from cache, or executes the fetcher function with request deduplication.
+   * `ttlSeconds` may be computed from the fetched result so fallback values expire sooner.
    */
   async getOrFetch<T>(
     key: string,
-    ttlSeconds: number,
+    ttlSeconds: TtlSeconds<T>,
     fetcher: () => Promise<T>
   ): Promise<T> {
     const now = Date.now();
@@ -37,10 +47,8 @@ class EnvironmentalCache {
     const promise = (async () => {
       try {
         const result = await fetcher();
-        this.cache.set(key, {
-          data: result,
-          expiresAt: Date.now() + ttlSeconds * 1000,
-        });
+        const ttl = typeof ttlSeconds === "function" ? ttlSeconds(result) : ttlSeconds;
+        this.set(key, result, ttl);
         return result;
       } finally {
         this.inFlight.delete(key);
@@ -49,6 +57,23 @@ class EnvironmentalCache {
 
     this.inFlight.set(key, promise);
     return promise;
+  }
+
+  private set<T>(key: string, data: T, ttlSeconds: number): void {
+    const now = Date.now();
+    this.cache.delete(key);
+    this.cache.set(key, { data, expiresAt: now + ttlSeconds * 1000 });
+
+    if (this.cache.size > this.maxEntries) {
+      for (const [k, entry] of this.cache) {
+        if (entry.expiresAt <= now) this.cache.delete(k);
+      }
+      while (this.cache.size > this.maxEntries) {
+        const oldest = this.cache.keys().next().value;
+        if (oldest === undefined) break;
+        this.cache.delete(oldest);
+      }
+    }
   }
 
   /**

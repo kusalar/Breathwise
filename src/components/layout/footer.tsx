@@ -82,7 +82,7 @@ export function Footer() {
                 <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Honest Environmental AI</span>
               </div>
-              <p className="text-[11px] leading-normal">
+              <p className="text-xs leading-normal">
                 Atmospheric metrics are derived from verified planetary dispersion models. We never fabricate physical sensor telemetry.
               </p>
             </div>

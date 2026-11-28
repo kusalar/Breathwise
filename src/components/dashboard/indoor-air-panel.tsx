@@ -1,5 +1,6 @@
+import Image from "next/image";
 import { IndoorAirAdvice } from "@/types";
-import { Home, Wind, Sparkles, CheckCircle2 } from "lucide-react";
+import { Home } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export function IndoorAirPanel() {
@@ -44,22 +45,23 @@ export function IndoorAirPanel() {
             <p className="text-xs text-muted-foreground">Practical indoor hacks for urban homes</p>
           </div>
         </div>
-        <Badge variant="outline" className="text-[10px] text-teal-700 dark:text-teal-400 border-teal-300 dark:border-teal-800">
+        <Badge variant="outline" className="text-xs text-teal-700 dark:text-teal-400 border-teal-300 dark:border-teal-800">
           Actionable Hacks
         </Badge>
       </div>
 
       <div className="relative overflow-hidden rounded-xl border border-teal-200/60 dark:border-emerald-950 h-36 sm:h-44">
-        <img
+        <Image
           src="/images/indoor-sanctuary.jpg"
           alt="Clean indoor living room with air-purifying plants and HEPA filtration"
-          loading="lazy"
-          className="h-full w-full object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, 480px"
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/65 via-slate-950/20 to-transparent" />
         <div className="absolute bottom-3 left-4 text-white">
           <p className="text-xs font-bold">Indoor Sanctuary Protocol</p>
-          <p className="text-[11px] text-slate-200">
+          <p className="text-xs text-slate-200">
             Combine midday cross-ventilation with elevated HEPA circulation
           </p>
         </div>
@@ -72,7 +74,7 @@ export function IndoorAirPanel() {
             className="p-4 rounded-xl border border-slate-100 dark:border-emerald-950 bg-slate-50/60 dark:bg-forest-950/40 flex flex-col justify-between"
           >
             <div>
-              <Badge variant="outline" className="text-[10px] uppercase font-semibold text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-900 mb-2">
+              <Badge variant="outline" className="text-xs uppercase font-semibold text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-900 mb-2">
                 {hack.actionType}
               </Badge>
               <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">
@@ -82,7 +84,7 @@ export function IndoorAirPanel() {
                 {hack.summary}
               </p>
             </div>
-            <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-emerald-950 text-[11px] text-teal-800 dark:text-teal-300 font-medium">
+            <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-emerald-950 text-xs text-teal-800 dark:text-teal-300 font-medium">
               💡 {hack.practicalTip}
             </div>
           </div>

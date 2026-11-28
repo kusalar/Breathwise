@@ -3,6 +3,8 @@
  * Provides DDoS, brute-force, and AI quota exhaustion protection.
  */
 
+const MAX_TRACKED_KEYS = 10_000;
+
 export interface RateLimitConfig {
   intervalMs: number;
   maxRequests: number;
@@ -45,6 +47,7 @@ class SlidingWindowRateLimiter {
 
     timestamps.push(now);
     this.requests.set(key, timestamps);
+    this.enforceKeyCap();
 
     const resetSeconds = Math.ceil(config.intervalMs / 1000);
     return {
@@ -53,6 +56,17 @@ class SlidingWindowRateLimiter {
       remaining: config.maxRequests - timestamps.length,
       resetSeconds,
     };
+  }
+
+  /**
+   * Evicts oldest tracked keys so distinct IP floods cannot exhaust heap memory.
+   */
+  private enforceKeyCap(): void {
+    while (this.requests.size > MAX_TRACKED_KEYS) {
+      const oldestKey = this.requests.keys().next().value;
+      if (oldestKey === undefined) break;
+      this.requests.delete(oldestKey);
+    }
   }
 
   /**
@@ -85,6 +99,12 @@ class SlidingWindowRateLimiter {
 export const rateLimiter = new SlidingWindowRateLimiter();
 
 export function getClientIp(headers: Headers): string {
+  // Prefer platform-set edge headers that clients cannot forge over X-Forwarded-For.
+  const platformIp = headers.get("x-vercel-forwarded-for") || headers.get("cf-connecting-ip");
+  if (platformIp && platformIp.trim().length > 0) {
+    return platformIp.split(",")[0].trim();
+  }
+
   const forwarded = headers.get("x-forwarded-for");
   if (forwarded) {
     const firstIp = forwarded.split(",")[0].trim();

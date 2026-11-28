@@ -3,35 +3,20 @@
 import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsClient, useThemePreference } from "@/hooks/use-stored-state";
 
 export function ThemeToggle() {
-  const [theme, setTheme] = React.useState<"light" | "dark">("light");
-  const [mounted, setMounted] = React.useState(false);
+  const [theme, setTheme] = useThemePreference();
+  const mounted = useIsClient();
 
   React.useEffect(() => {
-    setMounted(true);
-    const storedTheme = localStorage.getItem("breathewise_theme") as "light" | "dark" | null;
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = storedTheme || (systemPrefersDark ? "dark" : "light");
-
-    setTheme(initialTheme);
-    if (initialTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
   const toggleTheme = () => {
     const nextTheme = theme === "light" ? "dark" : "light";
     setTheme(nextTheme);
-    localStorage.setItem("breathewise_theme", nextTheme);
-
-    if (nextTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle("dark", nextTheme === "dark");
   };
 
   if (!mounted) {

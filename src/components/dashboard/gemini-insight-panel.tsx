@@ -1,7 +1,6 @@
 import { GeminiInsight } from "@/types";
-import { Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
+import { Sparkles, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 interface GeminiInsightPanelProps {
   insight: GeminiInsight;
@@ -19,12 +18,12 @@ export function GeminiInsightPanel({ insight }: GeminiInsightPanelProps) {
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               Gemini AI Atmospheric & Health Synthesis
             </h3>
-            <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+            <span className="text-xs text-emerald-800 dark:text-emerald-300 font-medium">
               Confidence Score: {Math.round(insight.confidenceScore * 100)}%
             </span>
           </div>
         </div>
-        <Badge variant="outline" className="text-[10px] text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
+        <Badge variant="outline" className="text-xs text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
           Live AI Synthesis
         </Badge>
       </div>

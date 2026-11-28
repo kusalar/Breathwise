@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import * as React from "react";
 import { DailyPlannerView } from "@/components/dashboard/daily-planner-view";
 import { FamilyProtectionView } from "@/components/dashboard/family-protection-view";
@@ -98,6 +98,10 @@ describe("Milestone 3 — Production Views & Interactive Features", () => {
       expect(screen.getByDisplayValue(/Morning Smog Inversion Window/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Save to My Routines/i })).toBeInTheDocument();
       expect(screen.getByText(/Add Another Schedule Block/i)).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(screen.getByText(/168/)).toBeInTheDocument();
+      });
     });
   });
 

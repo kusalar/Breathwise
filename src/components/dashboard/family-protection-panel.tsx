@@ -1,5 +1,5 @@
 import { FamilyProfile } from "@/types";
-import { Users, Heart, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export function FamilyProtectionPanel() {
@@ -47,7 +47,7 @@ export function FamilyProtectionPanel() {
             <p className="text-xs text-muted-foreground">Tailored safeguards for sensitive family members</p>
           </div>
         </div>
-        <Badge variant="outline" className="text-[10px] text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800">
+        <Badge variant="outline" className="text-xs text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800">
           Active Profiles
         </Badge>
       </div>
@@ -71,21 +71,21 @@ export function FamilyProtectionPanel() {
                       ? "warning"
                       : "default"
                   }
-                  className="text-[10px] px-1.5 py-0"
+                  className="text-xs px-1.5 py-0"
                 >
                   {member.vulnerabilityLevel}
                 </Badge>
               </div>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 Age {member.age} • {member.healthConditions.join(", ")}
               </span>
             </div>
 
             <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-emerald-950 text-xs text-slate-700 dark:text-slate-300">
-              <span className="font-semibold block text-[11px] text-slate-900 dark:text-slate-200 mb-0.5">
+              <span className="font-semibold block text-xs text-slate-900 dark:text-slate-200 mb-0.5">
                 Current Protocol:
               </span>
-              <p className="text-[11px] leading-relaxed">{member.activeAdvisory}</p>
+              <p className="text-xs leading-relaxed">{member.activeAdvisory}</p>
             </div>
           </div>
         ))}

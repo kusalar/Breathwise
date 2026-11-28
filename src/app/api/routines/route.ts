@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/server-auth";
 import { dataService } from "@/services/data-provider";
+import { parseSafeJson, formatSafe500Response } from "@/lib/api-security";
 import { z } from "zod";
 
 const RoutineItemSchema = z.object({
@@ -36,8 +37,7 @@ export async function GET(request: NextRequest) {
     const routines = await dataService.getSavedRoutines(user.id);
     return NextResponse.json({ routines });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return formatSafe500Response(error, "RoutinesRoute");
   }
 }
 
@@ -48,8 +48,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const parsed = SaveRoutineSchema.safeParse(body);
+    const parsedBody = await parseSafeJson<unknown>(request);
+    if (!parsedBody.success) {
+      return parsedBody.response;
+    }
+    const parsed = SaveRoutineSchema.safeParse(parsedBody.data);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -71,8 +74,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, routine: result.data }, { status: 201 });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return formatSafe500Response(error, "RoutinesRoute");
   }
 }
 
@@ -83,8 +85,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const parsed = UpdateRoutineSchema.safeParse(body);
+    const parsedBody = await parseSafeJson<unknown>(request);
+    if (!parsedBody.success) {
+      return parsedBody.response;
+    }
+    const parsed = UpdateRoutineSchema.safeParse(parsedBody.data);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -102,8 +107,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return formatSafe500Response(error, "RoutinesRoute");
   }
 }
 
@@ -128,8 +132,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return formatSafe500Response(error, "RoutinesRoute");
   }
 }
 

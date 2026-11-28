@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useStoredState } from "@/hooks/use-stored-state";
 import { Globe2, AlertTriangle, MapPin, Plus, CheckCircle2, Trash2, Users } from "lucide-react";
 import { useLocation } from "@/context/location-context";
 import { Button } from "@/components/ui/button";
@@ -39,30 +40,14 @@ const COMMUNITY_PLEDGES = [
  */
 export function CommunityHubView() {
   const { location } = useLocation();
-  const [reports, setReports] = React.useState<HotspotReport[]>([]);
+  const [reports, setReports] = useStoredState<HotspotReport[]>(REPORTS_STORAGE_KEY, []);
   const [locality, setLocality] = React.useState("");
   const [category, setCategory] = React.useState<HotspotReport["category"]>("biomass_burning");
   const [description, setDescription] = React.useState("");
-  const [joinedPledges, setJoinedPledges] = React.useState<string[]>([]);
-
-  React.useEffect(() => {
-    try {
-      const savedReports = localStorage.getItem(REPORTS_STORAGE_KEY);
-      if (savedReports) setReports(JSON.parse(savedReports) as HotspotReport[]);
-      const savedPledges = localStorage.getItem(PLEDGE_STORAGE_KEY);
-      if (savedPledges) setJoinedPledges(JSON.parse(savedPledges) as string[]);
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
+  const [joinedPledges, setJoinedPledges] = useStoredState<string[]>(PLEDGE_STORAGE_KEY, []);
 
   const persistReports = (list: HotspotReport[]) => {
     setReports(list);
-    try {
-      localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(list));
-    } catch {
-      // ignore storage errors
-    }
   };
 
   const handleReportSubmit = (e: React.FormEvent) => {
@@ -102,15 +87,9 @@ export function CommunityHubView() {
   };
 
   const togglePledge = (id: string) => {
-    const next = joinedPledges.includes(id)
-      ? joinedPledges.filter((p) => p !== id)
-      : [...joinedPledges, id];
-    setJoinedPledges(next);
-    try {
-      localStorage.setItem(PLEDGE_STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // ignore storage errors
-    }
+    setJoinedPledges((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -227,12 +206,12 @@ export function CommunityHubView() {
                         <span className="text-xs font-bold text-slate-900 dark:text-white">
                           {rep.locality} ({rep.city})
                         </span>
-                        <Badge variant={rep.status === "resolved" ? "default" : "outline"} className="text-[10px]">
+                        <Badge variant={rep.status === "resolved" ? "default" : "outline"} className="text-xs">
                           {rep.status === "resolved" ? "Resolved" : CATEGORY_LABELS[rep.category]}
                         </Badge>
                       </div>
                       <p className="text-xs text-slate-600 dark:text-slate-300">{rep.description}</p>
-                      <span className="text-[10px] text-muted-foreground font-mono">{rep.reportedAt}</span>
+                      <span className="text-xs text-muted-foreground font-mono">{rep.reportedAt}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <Button
@@ -288,7 +267,7 @@ export function CommunityHubView() {
                       <span className="text-xs font-bold text-slate-900 dark:text-white">{pledge.title}</span>
                       {joined && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" aria-hidden="true" />}
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">{pledge.impact}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{pledge.impact}</p>
                   </button>
                 );
               })}

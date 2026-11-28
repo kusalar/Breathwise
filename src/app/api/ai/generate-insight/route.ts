@@ -2,33 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { geminiService } from "@/services/gemini/gemini.service";
 import { airQualityService } from "@/services/air-quality/air-quality.service";
 import { weatherService } from "@/services/weather/weather.service";
+import { enforceRateLimit, parseSafeJson, formatSafe500Response } from "@/lib/api-security";
+import { RequestLocationSchema } from "@/lib/validations/location";
 import { z } from "zod";
 
 const InsightRequestSchema = z.object({
-  location: z.object({
-    name: z.string(),
-    region: z.string().default(""),
-    country: z.string().default("India"),
-    latitude: z.number(),
-    longitude: z.number(),
-  }),
+  location: RequestLocationSchema,
 });
 
 export async function POST(request: NextRequest) {
+  const limited = enforceRateLimit(request, "ai:insight", { intervalMs: 60_000, maxRequests: 10 });
+  if (limited) return limited;
+
+  const parsedBody = await parseSafeJson<unknown>(request, 16 * 1024);
+  if (!parsedBody.success) {
+    return parsedBody.response;
+  }
+
   try {
-    const body = await request.json();
-    const parsed = InsightRequestSchema.safeParse(body);
+    const parsed = InsightRequestSchema.safeParse(parsedBody.data);
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid request parameters", details: parsed.error.flatten() },
+        { error: "Invalid request parameters", details: parsed.error.flatten(), requestId: parsedBody.requestId },
         { status: 400 }
       );
     }
 
     const location = parsed.data.location;
-    const reading = await airQualityService.getCurrentReading(location);
-    const weather = await weatherService.getCurrentWeather(location);
+    const [reading, weather] = await Promise.all([
+      airQualityService.getCurrentReading(location),
+      weatherService.getCurrentWeather(location),
+    ]);
 
     const insight = await geminiService.generateAirQualityInsight(
       reading,
@@ -38,8 +43,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: insight }, { status: 200 });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return formatSafe500Response(error, "AiInsightRoute", parsedBody.requestId);
   }
 }
 

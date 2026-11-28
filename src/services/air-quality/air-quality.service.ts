@@ -20,6 +20,7 @@ export class AirQualityService implements IAirQualityService {
   private readonly baseUrl: string;
   private readonly requestTimeoutMs = 8000;
   private readonly cacheTtlSeconds = 600; // 10 minutes cache
+  private readonly fallbackCacheTtlSeconds = 30; // retry live telemetry shortly after failures
 
   constructor() {
     this.baseUrl =
@@ -43,7 +44,11 @@ export class AirQualityService implements IAirQualityService {
       environmentalCache.clear(cacheKey);
     }
 
-    return environmentalCache.getOrFetch(cacheKey, this.cacheTtlSeconds, async () => {
+    // Cache live telemetry for 10m and fallback data briefly so recovery is automatic.
+    const ttl = (reading: AirQualityReading) =>
+      reading.isDemoData ? this.fallbackCacheTtlSeconds : this.cacheTtlSeconds;
+
+    return environmentalCache.getOrFetch(cacheKey, ttl, async () => {
       try {
         const url = new URL(this.baseUrl);
         url.searchParams.set("latitude", location.latitude.toString());

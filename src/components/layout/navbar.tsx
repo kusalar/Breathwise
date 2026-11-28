@@ -7,9 +7,11 @@ import { siteConfig } from "@/config/site";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { useEscapeKey } from "@/hooks/use-dismissable";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  useEscapeKey(mobileMenuOpen, () => setMobileMenuOpen(false));
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-emerald-950/70 bg-white/90 dark:bg-forest-950/90 backdrop-blur-md transition-colors">
@@ -78,6 +80,7 @@ export function Navbar() {
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
             aria-label="Toggle navigation menu"
             className="w-9 h-9"
           >
@@ -93,6 +96,7 @@ export function Navbar() {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div
+          id="mobile-navigation"
           className="md:hidden border-b border-slate-200 dark:border-emerald-950 bg-white/98 dark:bg-forest-950/98 px-4 pt-2 pb-6 space-y-3 animate-in slide-in-from-top-2"
           role="region"
           aria-label="Mobile Navigation"

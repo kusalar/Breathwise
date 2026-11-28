@@ -4,7 +4,6 @@ import {
   FIREBASE_SESSION_COOKIE_NAME,
   type FirebaseSessionUser,
 } from "@/lib/firebase/session";
-import { isFirebaseAdminConfigured } from "@/lib/firebase/config";
 import { logger } from "@/lib/observability/logger";
 
 export interface AuthenticatedUser {
@@ -12,6 +11,15 @@ export interface AuthenticatedUser {
   email: string;
   fullName?: string;
   authProvider: "firebase" | "demo";
+}
+
+const SAFE_TEST_USER_ID = /^[A-Za-z0-9_-]{1,128}$/;
+
+/**
+ * Demo/test fallback identities are strictly prohibited in production builds on any host.
+ */
+export function isDemoAuthDisabled(): boolean {
+  return process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_APP_ENV === "production";
 }
 
 /**
@@ -44,18 +52,14 @@ export async function getSessionUser(request: NextRequest): Promise<Authenticate
     return null;
   }
 
-  // 2. Strict production enforcement: Reject all unauthenticated requests in production cloud environments
-  if (
-    (process.env.NODE_ENV === "production" && (process.env.VERCEL || process.env.NEXT_PUBLIC_APP_ENV === "production")) ||
-    request.headers.get("x-strict-auth") === "true"
-  ) {
+  // 2. Fail closed in production environments regardless of hosting provider
+  if (isDemoAuthDisabled() || request.headers.get("x-strict-auth") === "true") {
     return null;
   }
 
   // 3. Demonstration & Testing Mode (Offline dev / unit tests without mock session cookies)
-  // Check if test runner provided an explicit test user ID via custom header
   const testUserId = request.headers.get("x-user-id");
-  if (testUserId) {
+  if (testUserId && SAFE_TEST_USER_ID.test(testUserId)) {
     return {
       id: testUserId,
       email: `${testUserId}@breathewise.ai`,

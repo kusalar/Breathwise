@@ -16,10 +16,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DemoDataBadge } from "@/components/shared/demo-data-badge";
 
 const navItems = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -64,7 +62,7 @@ export function DashboardSidebar() {
               <span className="text-base font-extrabold tracking-tight bg-gradient-to-r from-emerald-900 to-emerald-700 dark:from-emerald-300 dark:to-emerald-100 bg-clip-text text-transparent">
                 BreatheWise<span className="text-emerald-600 dark:text-emerald-400"> AI</span>
               </span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
+              <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
                 Climate Intelligence
               </span>
             </div>
@@ -72,6 +70,7 @@ export function DashboardSidebar() {
         </Link>
         {!collapsed && (
           <button
+            type="button"
             onClick={() => setCollapsed(true)}
             className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-emerald-950/40"
             aria-label="Collapse sidebar"
@@ -85,6 +84,7 @@ export function DashboardSidebar() {
       {collapsed && (
         <div className="py-2 flex justify-center border-b border-slate-100 dark:border-emerald-950">
           <button
+            type="button"
             onClick={() => setCollapsed(false)}
             className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-emerald-950/40"
             aria-label="Expand sidebar"
@@ -131,12 +131,12 @@ export function DashboardSidebar() {
         <div className="p-4 m-3 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-slate-800 dark:text-slate-200">Atmospheric Stream</span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
               LIVE TELEMETRY
             </span>
           </div>
-          <p className="text-[11px] text-muted-foreground leading-normal">
+          <p className="text-xs text-muted-foreground leading-normal">
             Real-time planetary dispersion telemetry from Copernicus CAMS & Open-Meteo.
           </p>
         </div>

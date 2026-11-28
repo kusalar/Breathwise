@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getAdminAuth } from "@/lib/firebase/admin";
 import { firebaseAuthService } from "@/services/firebase/firebase-auth.service";
-import { setFirebaseSessionCookie, validateCsrfProtection } from "@/lib/firebase/session";
-import { initializeFirebaseUserProfile } from "@/lib/firebase/user-profile";
-import { rateLimiter, getClientIp } from "@/lib/rate-limit";
+import { setFirebaseSessionCookie } from "@/lib/firebase/session";
+import { guardAuthMutation } from "@/lib/auth/auth-route-helpers";
 import { parseSafeJson, formatSafe500Response } from "@/lib/api-security";
 
 const LoginSchema = z
@@ -18,34 +16,8 @@ const LoginSchema = z
   });
 
 export async function POST(request: NextRequest) {
-  // CSRF validation
-  const csrf = validateCsrfProtection(request);
-  if (!csrf.valid) {
-    return NextResponse.json(
-      { error: "Forbidden: CSRF check failed", reason: csrf.reason },
-      { status: 403 }
-    );
-  }
-
-  // Rate limit: 10 login attempts per minute per IP to mitigate brute force
-  const clientIp = getClientIp(request.headers);
-  const rateLimitStatus = rateLimiter.check(`auth:login:${clientIp}`, {
-    intervalMs: 60_000,
-    maxRequests: 10,
-  });
-
-  if (!rateLimitStatus.allowed) {
-    return NextResponse.json(
-      {
-        error: `Too many login attempts. Please wait ${rateLimitStatus.resetSeconds} seconds before retrying.`,
-        code: "RATE_LIMIT_EXCEEDED",
-      },
-      {
-        status: 429,
-        headers: { "Retry-After": String(rateLimitStatus.resetSeconds) },
-      }
-    );
-  }
+  const blocked = guardAuthMutation(request, "auth:login", { intervalMs: 60_000, maxRequests: 10 });
+  if (blocked) return blocked;
 
   const parsedBody = await parseSafeJson<unknown>(request, 32 * 1024);
   if (!parsedBody.success) {
@@ -63,7 +35,6 @@ export async function POST(request: NextRequest) {
 
     const { idToken, email, password } = parsed.data;
 
-    // Fast-path: Token exchange via Firebase ID Token
     if (idToken) {
       const result = await firebaseAuthService.createSessionFromIdToken(idToken);
       if (!result.success || !result.data) {
@@ -77,12 +48,10 @@ export async function POST(request: NextRequest) {
         { success: true, user: result.data.user, profile: result.data.profile, requestId: parsedBody.requestId },
         { status: 200 }
       );
-
       setFirebaseSessionCookie(response, result.data.sessionCookie, result.data.expiresInMs);
       return response;
     }
 
-    // Direct email/password authentication via Identity Toolkit & session cookie minting
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -97,11 +66,7 @@ export async function POST(request: NextRequest) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            password,
-            returnSecureToken: true,
-          }),
+          body: JSON.stringify({ email, password, returnSecureToken: true }),
         }
       );
 
@@ -130,7 +95,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 200 }
       );
-
       setFirebaseSessionCookie(response, result.data.sessionCookie, result.data.expiresInMs);
       return response;
     } catch {

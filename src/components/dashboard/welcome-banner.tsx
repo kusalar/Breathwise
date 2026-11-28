@@ -1,5 +1,5 @@
 import { GeoLocation } from "@/types";
-import { Sparkles, Calendar, CheckCircle2, Settings2 } from "lucide-react";
+import { Calendar, CheckCircle2, Settings2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { siteConfig } from "@/config/site";
 import { useLocation } from "@/context/location-context";
@@ -26,7 +26,7 @@ export function WelcomeBanner({ location, onLocationChange }: WelcomeBannerProps
           <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
             {userName ? `Welcome, ${userName}` : "Welcome Back"}
           </span>
-          <Badge variant="outline" className="text-[10px] text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 gap-1">
+          <Badge variant="outline" className="text-xs text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 gap-1">
             <CheckCircle2 className="h-3 w-3 text-emerald-600" />
             <span>Live Telemetry</span>
           </Badge>
@@ -34,7 +34,7 @@ export function WelcomeBanner({ location, onLocationChange }: WelcomeBannerProps
             <button
               type="button"
               onClick={() => setIsOnboardingOpen(true)}
-              className="text-[10px] px-2 py-0.5 rounded-md border border-slate-200 dark:border-emerald-900 bg-white/60 dark:bg-forest-900/60 text-slate-600 dark:text-slate-300 hover:text-emerald-700 flex items-center gap-1 transition-colors"
+              className="text-xs px-2 py-0.5 rounded-md border border-slate-200 dark:border-emerald-900 bg-white/60 dark:bg-forest-900/60 text-slate-600 dark:text-slate-300 hover:text-emerald-700 flex items-center gap-1 transition-colors"
               title="Change your preferred default location and name"
             >
               <Settings2 className="h-2.5 w-2.5" />
@@ -54,7 +54,7 @@ export function WelcomeBanner({ location, onLocationChange }: WelcomeBannerProps
 
         {/* Quick City Switch Pills */}
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-[11px] text-muted-foreground font-semibold mr-1">Switch City:</span>
+          <span className="text-xs text-muted-foreground font-semibold mr-1">Switch City:</span>
           {siteConfig.supportedLocations.map((loc) => {
             const isSelected = loc.name === location.name;
             return (
@@ -77,7 +77,7 @@ export function WelcomeBanner({ location, onLocationChange }: WelcomeBannerProps
 
       <div className="flex items-center gap-3 self-stretch sm:self-auto justify-end">
         <div className="rounded-xl border border-emerald-200/80 dark:border-emerald-900 bg-white/80 dark:bg-forest-900/80 px-4 py-2.5 text-right shadow-2xs">
-          <span className="text-[11px] text-muted-foreground block">Active Guidance Profile</span>
+          <span className="text-xs text-muted-foreground block">Active Guidance Profile</span>
           <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
             Family Protection Mode (Active)
           </span>

@@ -120,7 +120,7 @@ export function Features() {
                     <div className="h-11 w-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-900 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <Badge variant="outline" className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900">
+                    <Badge variant="outline" className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900">
                       {feature.badge}
                     </Badge>
                   </div>

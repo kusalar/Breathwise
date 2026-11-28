@@ -4,12 +4,10 @@ import * as React from "react";
 import {
   Calendar,
   Clock,
-  ShieldAlert,
   Sparkles,
   Save,
   Trash2,
   CheckCircle2,
-  AlertTriangle,
   Info,
   RefreshCw,
   Plus,
@@ -25,15 +23,14 @@ import { useLocation } from "@/context/location-context";
 
 export function DailyPlannerView() {
   const { location: contextLocation, setLocation: setContextLocation } = useLocation();
-  const [location, setLocation] = React.useState<GeoLocation>(
-    contextLocation ?? siteConfig.initialLocation
-  );
-
-  React.useEffect(() => {
-    if (contextLocation) {
-      setLocation(contextLocation);
-    }
-  }, [contextLocation]);
+  const [locationOverride, setLocationOverride] = React.useState<{
+    forContext: GeoLocation | undefined;
+    loc: GeoLocation;
+  } | null>(null);
+  const location =
+    locationOverride && locationOverride.forContext === contextLocation
+      ? locationOverride.loc
+      : contextLocation ?? siteConfig.initialLocation;
   const [airQuality, setAirQuality] = React.useState<AirQualityReading | null>(null);
   const [loadingAQI, setLoadingAQI] = React.useState(true);
   const [generating, setGenerating] = React.useState(false);
@@ -76,21 +73,18 @@ export function DailyPlannerView() {
   ]);
 
   // Load live environmental telemetry
-  const loadAQI = React.useCallback(async (loc: GeoLocation) => {
-    setLoadingAQI(true);
+  const loadAQI = React.useCallback(async (loc: GeoLocation): Promise<AirQualityReading | null> => {
     try {
       const res = await fetch(
         `/api/air-quality?lat=${loc.latitude}&lon=${loc.longitude}&city=${encodeURIComponent(loc.name)}`
       );
       if (res.ok) {
-        const data = await res.json();
-        setAirQuality(data);
+        return (await res.json()) as AirQualityReading;
       }
     } catch {
       // Keep existing data
-    } finally {
-      setLoadingAQI(false);
     }
+    return null;
   }, []);
 
   // Fetch saved routines from API
@@ -107,9 +101,34 @@ export function DailyPlannerView() {
   }, []);
 
   React.useEffect(() => {
-    loadAQI(location);
-    loadSavedRoutines();
-  }, [location, loadAQI, loadSavedRoutines]);
+    let cancelled = false;
+    loadAQI(location)
+      .then((aqiData) => {
+        if (!cancelled && aqiData) {
+          setAirQuality(aqiData);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingAQI(false);
+        }
+      });
+
+    fetch("/api/routines")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data) {
+          setSavedRoutines(data.routines || []);
+        }
+      })
+      .catch(() => {
+        // Fallback
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location, loadAQI]);
 
   // Generate Routine with AI
   const handleGenerateAI = async () => {
@@ -227,7 +246,8 @@ export function DailyPlannerView() {
           <LocationSelector
             currentLocation={location}
             onLocationChange={(loc: GeoLocation) => {
-              setLocation(loc);
+              setLoadingAQI(true);
+              setLocationOverride({ forContext: contextLocation, loc });
               setContextLocation(loc);
             }}
           />
@@ -343,6 +363,7 @@ export function DailyPlannerView() {
                       </select>
 
                       <button
+                        type="button"
                         onClick={() => handleRemoveItem(idx)}
                         className="p-1 text-slate-400 hover:text-red-500 transition-colors"
                         title="Remove time block"
@@ -411,7 +432,7 @@ export function DailyPlannerView() {
                       <div className="text-xs font-semibold text-slate-900 dark:text-white">
                         {routine.title}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-xs text-slate-500 mt-0.5">
                         Target Date: {routine.targetDate} | {routine.routinePayload.length} blocks
                       </div>
                     </div>

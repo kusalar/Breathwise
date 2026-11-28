@@ -8,15 +8,11 @@ import {
   TrendingDown,
   Award,
   Plus,
-  ShieldCheck,
   Info,
-  Calendar,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SustainabilityAction } from "@/types";
 
 export function ImpactTrackerView() {
@@ -31,24 +27,49 @@ export function ImpactTrackerView() {
   const [particulateAvoided, setParticulateAvoided] = React.useState<number>(40);
   const [submitting, setSubmitting] = React.useState(false);
 
-  const fetchActions = React.useCallback(async () => {
+  const retrieveActions = React.useCallback(async (): Promise<SustainabilityAction[] | null> => {
     try {
-      setLoading(true);
       const res = await fetch("/api/sustainability");
       if (res.ok) {
         const data = await res.json();
-        setActions(data.actions || []);
+        return (data.actions || []) as SustainabilityAction[];
       }
     } catch {
       // error
+    }
+    return null;
+  }, []);
+
+  const fetchActions = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await retrieveActions();
+      if (list) {
+        setActions(list);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [retrieveActions]);
 
   React.useEffect(() => {
-    fetchActions();
-  }, [fetchActions]);
+    let cancelled = false;
+    retrieveActions()
+      .then((list) => {
+        if (!cancelled && list) {
+          setActions(list);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [retrieveActions]);
 
   const totalCo2Saved = actions.reduce((sum, a) => sum + (Number(a.estimatedCo2SavedKg) || 0), 0);
   const avgParticulateAvoided =
@@ -132,7 +153,7 @@ export function ImpactTrackerView() {
               <div className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
                 {totalCo2Saved.toFixed(1)} <span className="text-base font-normal text-slate-500">kg CO₂e</span>
               </div>
-              <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                 Equivalent to planting ~{(totalCo2Saved / 21).toFixed(2)} urban trees
               </div>
             </div>
@@ -151,7 +172,7 @@ export function ImpactTrackerView() {
               <div className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
                 {avgParticulateAvoided}%
               </div>
-              <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                 Inhaled particulate exposure reduction
               </div>
             </div>
@@ -170,7 +191,7 @@ export function ImpactTrackerView() {
               <div className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
                 {actions.length}
               </div>
-              <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                 Secured via PostgreSQL RLS
               </div>
             </div>
@@ -185,7 +206,7 @@ export function ImpactTrackerView() {
       {showAddForm && (
         <Card className="border-emerald-600/30 shadow-md">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
+            <CardTitle as="h2" className="text-base font-bold text-slate-900 dark:text-white">
               Log a Clean Lifestyle Action
             </CardTitle>
             <CardDescription className="text-xs">
@@ -196,10 +217,11 @@ export function ImpactTrackerView() {
             <form onSubmit={handleAddAction} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="impact-category" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Category
                   </label>
                   <select
+                    id="impact-category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value as SustainabilityAction["category"])}
                     className="mt-1 w-full rounded-md border border-slate-300 dark:border-forest-700 bg-white dark:bg-forest-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -212,10 +234,11 @@ export function ImpactTrackerView() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="impact-co2-saved" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Estimated CO₂ Saved (kg)
                   </label>
                   <input
+                    id="impact-co2-saved"
                     type="number"
                     step="0.1"
                     min="0"
@@ -227,10 +250,11 @@ export function ImpactTrackerView() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="impact-particulate-avoided" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Particulate Avoided (%)
                   </label>
                   <input
+                    id="impact-particulate-avoided"
                     type="number"
                     min="0"
                     max="100"
@@ -242,10 +266,11 @@ export function ImpactTrackerView() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="impact-description" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Action Details & Context
                 </label>
                 <input
+                  id="impact-description"
                   type="text"
                   required
                   value={description}
@@ -276,7 +301,7 @@ export function ImpactTrackerView() {
       {/* Logged Actions Table */}
       <Card className="border-slate-200 dark:border-forest-800 shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <CardTitle as="h2" className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Activity className="h-4 w-4 text-emerald-600" />
             Your Environmental Action History
           </CardTitle>
@@ -293,7 +318,7 @@ export function ImpactTrackerView() {
               <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                 No actions logged yet
               </div>
-              <p className="text-[11px] max-w-sm mx-auto text-slate-500">
+              <p className="text-xs max-w-sm mx-auto text-slate-500">
                 Log an action above or visit Sustainable Choices to log one-click alternatives!
               </p>
             </div>
@@ -303,14 +328,14 @@ export function ImpactTrackerView() {
                 <div key={a.id} className="py-3 flex items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Badge className="capitalize text-[10px] bg-slate-100 dark:bg-forest-900 text-slate-800 dark:text-slate-200 border-none font-semibold">
+                      <Badge className="capitalize text-xs bg-slate-100 dark:bg-forest-900 text-slate-800 dark:text-slate-200 border-none font-semibold">
                         {a.category}
                       </Badge>
                       <span className="text-xs font-medium text-slate-900 dark:text-white">
                         {a.actionDescription}
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-500 flex items-center gap-3">
+                    <div className="text-xs text-slate-500 flex items-center gap-3">
                       <span>Saved: <strong className="text-emerald-600 dark:text-emerald-400">{a.estimatedCo2SavedKg} kg CO₂</strong></span>
                       <span>Exposure Avoided: <strong className="text-blue-600 dark:text-blue-400">{a.estimatedParticulateAvoidedPct}%</strong></span>
                       <span>{new Date(a.recordedAt).toLocaleDateString()}</span>
@@ -336,7 +361,7 @@ export function ImpactTrackerView() {
       {/* Scientific Methodology & Transparency Box */}
       <Card className="border-slate-200 dark:border-forest-800 shadow-sm bg-slate-50/50 dark:bg-forest-950/30">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+          <CardTitle as="h2" className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
             <Info className="h-4 w-4 text-emerald-600" />
             Methodology & Uncertainty Disclosures
           </CardTitle>

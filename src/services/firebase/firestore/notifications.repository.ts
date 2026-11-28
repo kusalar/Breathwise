@@ -33,7 +33,7 @@ export class NotificationsRepository extends BaseFirestoreRepository {
           dailyBriefingTime: "07:00:00",
         };
       }
-      return mock as NotificationPreferencesData;
+      return mock as unknown as NotificationPreferencesData;
     }
 
     try {

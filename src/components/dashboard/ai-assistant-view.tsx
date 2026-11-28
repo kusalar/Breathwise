@@ -8,18 +8,15 @@ import {
   Sparkles,
   Trash2,
   RefreshCw,
-  AlertCircle,
-  ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DemoDataBadge } from "@/components/shared/demo-data-badge";
 import { GeoLocation, AirQualityReading, WeatherReading } from "@/types";
 import { siteConfig } from "@/config/site";
 import { useLocation } from "@/context/location-context";
 import { airQualityService } from "@/services/air-quality/air-quality.service";
 import { weatherService } from "@/services/weather/weather.service";
+import { logger } from "@/lib/observability/logger";
 
 interface Message {
   id: string;
@@ -31,6 +28,10 @@ interface Message {
   isError?: boolean;
   fallbackUsed?: boolean;
   modelUsed?: string;
+}
+
+function newMessageId(prefix: string): string {
+  return `${prefix}-${crypto.randomUUID()}`;
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -45,7 +46,7 @@ function getClientSideAirQualityReply(
   query: string,
   location: GeoLocation,
   reading: AirQualityReading | null,
-  weather: WeatherReading | null
+  _weather: WeatherReading | null
 ): string {
   const q = query.toLowerCase();
   const loc = location?.name || "your area";
@@ -88,25 +89,11 @@ export function AiAssistantView({
   initialLocation?: GeoLocation;
 }) {
   const { location: contextLocation } = useLocation();
-  const [location, setLocation] = React.useState<GeoLocation>(
-    initialLocation ?? contextLocation ?? siteConfig.initialLocation
-  );
+  const location = initialLocation ?? contextLocation ?? siteConfig.initialLocation;
   const [reading, setReading] = React.useState<AirQualityReading | null>(null);
   const [weather, setWeather] = React.useState<WeatherReading | null>(null);
   const [input, setInput] = React.useState("");
   const [loading, setLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    if (contextLocation) {
-      setLocation(contextLocation);
-    }
-  }, [contextLocation]);
-
-  React.useEffect(() => {
-    if (initialLocation) {
-      setLocation(initialLocation);
-    }
-  }, [initialLocation]);
   const [messages, setMessages] = React.useState<Message[]>([
     {
       id: "welcome-msg",
@@ -131,7 +118,7 @@ export function AiAssistantView({
         setReading(aqi);
         setWeather(w);
       } catch (e) {
-        console.warn("Failed to preload telemetry for AI assistant:", e);
+        logger.warn("AiAssistantView", "Failed to preload telemetry for AI assistant", { meta: { error: e instanceof Error ? e.message : String(e) } });
       }
     }
     loadData();
@@ -147,7 +134,7 @@ export function AiAssistantView({
     if (!query.trim() || loading) return;
 
     const userMsg: Message = {
-      id: `user-${Date.now()}`,
+      id: newMessageId("user"),
       sender: "user",
       text: query.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -173,8 +160,6 @@ export function AiAssistantView({
         body: JSON.stringify({
           message: query,
           location,
-          reading,
-          weather,
         }),
       });
 
@@ -185,7 +170,7 @@ export function AiAssistantView({
         }
       }
     } catch (networkErr) {
-      console.warn("AI chat endpoint unreachable, activating client fallback:", networkErr);
+      logger.warn("AiAssistantView", "AI chat endpoint unreachable, activating client fallback", { meta: { error: networkErr instanceof Error ? networkErr.message : String(networkErr) } });
     } finally {
       setLoading(false);
     }
@@ -204,7 +189,7 @@ export function AiAssistantView({
     }
 
     const assistantMsg: Message = {
-      id: `ai-${Date.now()}`,
+      id: newMessageId("ai"),
       sender: "assistant",
       text: aiData.reply,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -241,7 +226,7 @@ export function AiAssistantView({
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 BreatheWise Gemini Assistant
               </h2>
-              <Badge variant="outline" className="text-[10px] text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
+              <Badge variant="outline" className="text-xs text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
                 Contextual AI
               </Badge>
             </div>
@@ -257,7 +242,7 @@ export function AiAssistantView({
             size="sm"
             onClick={handleClearChat}
             className="text-xs text-muted-foreground hover:text-slate-900 dark:hover:text-white gap-1"
-            title="Clear message history"
+            aria-label="Clear chat history"
           >
             <Trash2 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Clear Chat</span>
@@ -266,7 +251,13 @@ export function AiAssistantView({
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+      <div
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label="Conversation with the BreatheWise assistant"
+        className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
+      >
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -299,14 +290,14 @@ export function AiAssistantView({
 
               {/* Message metadata footer */}
               <div
-                className={`mt-2 pt-1 flex items-center justify-between gap-2 text-[10px] ${
+                className={`mt-2 pt-1 flex items-center justify-between gap-2 text-xs ${
                   msg.sender === "user" ? "text-emerald-200" : "text-muted-foreground"
                 }`}
               >
                 <div className="flex items-center gap-1.5">
                   <span>{msg.timestamp}</span>
                   {msg.fallbackUsed && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-medium">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-medium">
                       Backup AI Active
                     </span>
                   )}
@@ -323,12 +314,12 @@ export function AiAssistantView({
         ))}
 
         {loading && (
-          <div className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+          <div className="flex items-start gap-3" role="status">
+            <div className="h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0" aria-hidden="true">
               <Bot className="h-4 w-4" />
             </div>
             <div className="p-3.5 rounded-2xl rounded-tl-xs bg-slate-100 dark:bg-forest-950 border border-slate-200/70 dark:border-emerald-950 flex items-center gap-2 text-xs text-muted-foreground">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+              <RefreshCw className="h-3.5 w-3.5 motion-safe:animate-spin text-emerald-600" aria-hidden="true" />
               <span>Gemini is synthesizing verified environmental advice...</span>
             </div>
           </div>
@@ -345,7 +336,7 @@ export function AiAssistantView({
             type="button"
             onClick={() => handleSendMessage(q)}
             disabled={loading}
-            className="text-[11px] px-2.5 py-1 rounded-full border border-slate-200 dark:border-emerald-900 bg-white dark:bg-forest-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-200 text-slate-700 dark:text-slate-300 transition-colors disabled:opacity-50"
+            className="text-xs px-2.5 py-1 rounded-full border border-slate-200 dark:border-emerald-900 bg-white dark:bg-forest-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-200 text-slate-700 dark:text-slate-300 transition-colors disabled:opacity-50"
           >
             {q}
           </button>
@@ -380,7 +371,7 @@ export function AiAssistantView({
             <span className="hidden sm:inline">Send</span>
           </Button>
         </form>
-        <p className="mt-2 text-[10px] text-center text-muted-foreground">
+        <p className="mt-2 text-xs text-center text-muted-foreground">
           AI guidance is advisory and synchronized with Indian CPCB and Open-Meteo models. In case of respiratory symptoms, follow medical guidance.
         </p>
       </div>

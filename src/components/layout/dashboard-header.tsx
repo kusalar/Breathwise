@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, User, Search, ShieldAlert, Sparkles, Menu, MapPin, Settings, Users, Wind } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bell, ShieldAlert, Sparkles, Menu, MapPin, Settings, Users, Wind } from "lucide-react";
 import { LocationSelector } from "@/components/shared/location-selector";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { GeoLocation } from "@/types";
 import { siteConfig } from "@/config/site";
 import { useLocation } from "@/context/location-context";
+import { useEscapeKey } from "@/hooks/use-dismissable";
 
 interface DashboardHeaderProps {
   currentLocation?: GeoLocation;
@@ -21,10 +23,16 @@ export function DashboardHeader({
   onLocationChange,
   onMobileMenuToggle,
 }: DashboardHeaderProps) {
+  const router = useRouter();
   const { userName, defaultLocation, setIsOnboardingOpen } = useLocation();
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
   const [profileOpen, setProfileOpen] = React.useState(false);
   const [sessionUser, setSessionUser] = React.useState<{ email?: string; fullName?: string } | null>(null);
+
+  useEscapeKey(notificationsOpen || profileOpen, () => {
+    setNotificationsOpen(false);
+    setProfileOpen(false);
+  });
 
   React.useEffect(() => {
     fetch("/api/auth/session")
@@ -79,27 +87,34 @@ export function DashboardHeader({
               setProfileOpen(false);
             }}
             aria-label="View notifications"
+            aria-haspopup="true"
+            aria-controls="notifications-popover"
             aria-expanded={notificationsOpen}
           >
             <Bell className="h-4 w-4" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-500" />
+            <span aria-hidden="true" className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-500 motion-safe:animate-ping" />
+            <span aria-hidden="true" className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-500" />
           </Button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-slate-200 dark:border-emerald-950 bg-white dark:bg-forest-900 p-3 shadow-xl z-50 animate-in fade-in-50">
+            <div
+              id="notifications-popover"
+              role="region"
+              aria-label="Environmental alerts"
+              className="absolute right-0 mt-2 w-80 rounded-xl border border-slate-200 dark:border-emerald-950 bg-white dark:bg-forest-900 p-3 shadow-xl z-50 animate-in fade-in-50"
+            >
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-emerald-950">
                 <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                   Environmental Alerts (Live)
                 </span>
-                <span className="text-[10px] text-muted-foreground">{currentLocation.name} Area</span>
+                <span className="text-xs text-muted-foreground">{currentLocation.name} Area</span>
               </div>
               <div className="py-2 space-y-2 text-xs">
                 <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 flex gap-2 items-start">
                   <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-[11px]">Evening Smog Inversion Spike</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <p className="font-semibold text-xs">Evening Smog Inversion Spike</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       PM2.5 concentration expected to rise after 6:00 PM due to cooling ground temperatures.
                     </p>
                   </div>
@@ -118,6 +133,8 @@ export function DashboardHeader({
               setNotificationsOpen(false);
             }}
             aria-expanded={profileOpen}
+            aria-haspopup="true"
+            aria-controls="profile-popover"
             aria-label="User profile and settings"
             className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-emerald-950 p-1 hover:bg-slate-50 dark:hover:bg-emerald-950/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
           >
@@ -127,7 +144,12 @@ export function DashboardHeader({
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 dark:border-emerald-950 bg-white dark:bg-forest-900 p-3 shadow-xl z-50 animate-in fade-in-50">
+            <div
+              id="profile-popover"
+              role="region"
+              aria-label="Profile menu"
+              className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 dark:border-emerald-950 bg-white dark:bg-forest-900 p-3 shadow-xl z-50 animate-in fade-in-50"
+            >
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-emerald-950">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-xs">
                   {(userName || sessionUser?.fullName)?.substring(0, 2).toUpperCase() || "BW"}
@@ -136,7 +158,7 @@ export function DashboardHeader({
                   <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                     {userName || sessionUser?.fullName || "BreatheWise Pioneer"}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">{sessionUser?.email || "user@breathewise.ai"}</span>
+                  <span className="text-xs text-muted-foreground">{sessionUser?.email || "user@breathewise.ai"}</span>
                 </div>
               </div>
               <div className="py-2 text-xs space-y-1">
@@ -152,7 +174,7 @@ export function DashboardHeader({
                     <MapPin className="h-3 w-3" />
                     <span>Default Location & Name</span>
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-medium">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-medium">
                     {defaultLocation?.name || currentLocation.name}
                   </span>
                 </button>
@@ -181,7 +203,7 @@ export function DashboardHeader({
                   <span>Air Purifier Hardware Sync</span>
                 </Link>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-emerald-950 text-[11px] text-muted-foreground px-2">
+              <div className="pt-2 border-t border-slate-100 dark:border-emerald-950 text-xs text-muted-foreground px-2">
                 Firebase Authentication active (HttpOnly session secured).
               </div>
               <div className="pt-2 border-t border-slate-100 dark:border-emerald-950">
@@ -189,7 +211,8 @@ export function DashboardHeader({
                   type="button"
                   onClick={async () => {
                     await fetch("/api/auth/logout", { method: "POST" });
-                    window.location.href = "/login";
+                    router.push("/login");
+                    router.refresh();
                   }}
                   className="w-full text-left px-2 py-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-medium text-xs transition-colors"
                 >

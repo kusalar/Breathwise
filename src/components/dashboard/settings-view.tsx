@@ -2,29 +2,26 @@
 
 import * as React from "react";
 import {
-  Settings,
   MapPin,
   Clock,
   Bell,
   Save,
   CheckCircle2,
-  Shield,
-  Sliders,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { siteConfig } from "@/config/site";
 import { GeoLocation } from "@/types";
 import { useLocation } from "@/context/location-context";
 
 export function SettingsView() {
   const { userName, setUserName, defaultLocation, location, setDefaultLocation } = useLocation();
-  const [displayName, setDisplayName] = React.useState(userName || "");
-  const [selectedCityName, setSelectedCityName] = React.useState(
-    (defaultLocation || location)?.name || siteConfig.initialLocation.name
-  );
+  const [draftDisplayName, setDraftDisplayName] = React.useState<string | null>(null);
+  const [cityOverride, setCityOverride] = React.useState<{
+    forLocation: GeoLocation | undefined;
+    cityName: string;
+  } | null>(null);
   const [standard, setStandard] = React.useState("CPCB_INDIA");
   const [morningCommute, setMorningCommute] = React.useState("08:30");
   const [eveningCommute, setEveningCommute] = React.useState("18:00");
@@ -33,14 +30,12 @@ export function SettingsView() {
   const [saving, setSaving] = React.useState(false);
   const [savedSuccess, setSavedSuccess] = React.useState(false);
 
-  React.useEffect(() => {
-    if (userName) setDisplayName(userName);
-  }, [userName]);
-
-  React.useEffect(() => {
-    const active = defaultLocation || location;
-    if (active?.name) setSelectedCityName(active.name);
-  }, [defaultLocation, location]);
+  const activeLocation = defaultLocation || location;
+  const displayName = draftDisplayName ?? (userName || "");
+  const selectedCityName =
+    cityOverride && cityOverride.forLocation === activeLocation
+      ? cityOverride.cityName
+      : activeLocation?.name || siteConfig.initialLocation.name;
 
   const selectedLoc = siteConfig.supportedLocations.find((l: GeoLocation) => l.name === selectedCityName) || siteConfig.supportedLocations[0];
 
@@ -98,7 +93,7 @@ export function SettingsView() {
         {/* Default Location Card */}
         <Card className="border-slate-200 dark:border-forest-800 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+            <CardTitle as="h2" className="text-base font-bold flex items-center gap-2 text-slate-900 dark:text-white">
               <MapPin className="h-4 w-4 text-emerald-600" />
               Default Monitoring Location
             </CardTitle>
@@ -115,7 +110,7 @@ export function SettingsView() {
                 id="settings-display-name"
                 type="text"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => setDraftDisplayName(e.target.value)}
                 placeholder="Enter your display name"
                 className="mt-1 w-full rounded-md border border-slate-300 dark:border-forest-700 bg-white dark:bg-forest-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
@@ -128,7 +123,9 @@ export function SettingsView() {
                 <select
                   id="settings-base-city"
                   value={selectedCityName}
-                  onChange={(e) => setSelectedCityName(e.target.value)}
+                  onChange={(e) =>
+                    setCityOverride({ forLocation: activeLocation, cityName: e.target.value })
+                  }
                   className="mt-1 w-full rounded-md border border-slate-300 dark:border-forest-700 bg-white dark:bg-forest-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   {siteConfig.supportedLocations.map((loc: GeoLocation) => (
@@ -161,7 +158,7 @@ export function SettingsView() {
         {/* Schedule Preferences Card */}
         <Card className="border-slate-200 dark:border-forest-800 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+            <CardTitle as="h2" className="text-base font-bold flex items-center gap-2 text-slate-900 dark:text-white">
               <Clock className="h-4 w-4 text-emerald-600" />
               Daily Routine Schedule Timings
             </CardTitle>
@@ -172,10 +169,11 @@ export function SettingsView() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="settings-morning-commute" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Morning Commute Departure
                 </label>
                 <input
+                  id="settings-morning-commute"
                   type="time"
                   value={morningCommute}
                   onChange={(e) => setMorningCommute(e.target.value)}
@@ -184,10 +182,11 @@ export function SettingsView() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="settings-evening-commute" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Evening Return Transit
                 </label>
                 <input
+                  id="settings-evening-commute"
                   type="time"
                   value={eveningCommute}
                   onChange={(e) => setEveningCommute(e.target.value)}
@@ -196,10 +195,11 @@ export function SettingsView() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor="settings-school-drop" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   School Drop / Outdoor Play
                 </label>
                 <input
+                  id="settings-school-drop"
                   type="time"
                   value={schoolDropTime}
                   onChange={(e) => setSchoolDropTime(e.target.value)}
@@ -213,7 +213,7 @@ export function SettingsView() {
         {/* Alert Notifications Card */}
         <Card className="border-slate-200 dark:border-forest-800 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+            <CardTitle as="h2" className="text-base font-bold flex items-center gap-2 text-slate-900 dark:text-white">
               <Bell className="h-4 w-4 text-emerald-600" />
               Smog Alert & Advisory Thresholds
             </CardTitle>
@@ -231,6 +231,7 @@ export function SettingsView() {
               </div>
               <input
                 type="range"
+                aria-label="Severe smog inversion alert threshold (AQI)"
                 min="100"
                 max="400"
                 step="25"
@@ -238,7 +239,7 @@ export function SettingsView() {
                 onChange={(e) => setSevereAlertThreshold(Number(e.target.value))}
                 className="mt-2 w-full accent-emerald-600 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+              <div className="flex justify-between text-xs text-slate-400 mt-1">
                 <span>100 (Moderate)</span>
                 <span>200 (Poor)</span>
                 <span>300 (Very Poor)</span>

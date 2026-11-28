@@ -1,6 +1,6 @@
 import { RoutineItem } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Clock } from "lucide-react";
 
 export function RoutinePlannerPanel() {
   const routine: RoutineItem[] = [
@@ -49,7 +49,7 @@ export function RoutinePlannerPanel() {
             Synchronized with diurnal smog dispersion cycles
           </p>
         </div>
-        <Badge variant="outline" className="text-[10px] text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
+        <Badge variant="outline" className="text-xs text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
           Diurnal Model
         </Badge>
       </div>
@@ -68,7 +68,7 @@ export function RoutinePlannerPanel() {
                 </span>
                 <Badge
                   variant={item.status === "recommended" ? "default" : "warning"}
-                  className="text-[10px] py-0"
+                  className="text-xs py-0"
                 >
                   {item.status === "recommended" ? "Optimal Window" : "Precaution Required"}
                 </Badge>

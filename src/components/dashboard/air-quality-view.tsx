@@ -21,9 +21,10 @@ import { Badge } from "@/components/ui/badge";
  */
 export function AirQualityView() {
   const { location: contextLocation, setLocation: setContextLocation } = useLocation();
-  const [location, setLocation] = React.useState<GeoLocation>(
-    contextLocation ?? siteConfig.initialLocation
-  );
+  const [locationOverride, setLocationOverride] = React.useState<{
+    forContext: GeoLocation | undefined;
+    loc: GeoLocation;
+  } | null>(null);
   const [reading, setReading] = React.useState<AirQualityReading | null>(null);
   const [weather, setWeather] = React.useState<WeatherReading | null>(null);
   const [cityComparison, setCityComparison] = React.useState<AirQualityReading[]>([]);
@@ -32,46 +33,77 @@ export function AirQualityView() {
   const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    if (contextLocation) {
-      setLocation(contextLocation);
-    }
-  }, [contextLocation]);
+  const location =
+    locationOverride && locationOverride.forContext === contextLocation
+      ? locationOverride.loc
+      : contextLocation ?? siteConfig.initialLocation;
 
-  const loadAnalytics = React.useCallback(async (loc: GeoLocation, forceRefresh = false) => {
-    if (forceRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-
-    try {
-      const [aqiData, weatherData, comparisonData] = await Promise.all([
-        airQualityService.getCurrentReading(loc, "CPCB_INDIA", forceRefresh),
-        weatherService.getCurrentWeather(loc, forceRefresh),
-        Promise.all(
-          siteConfig.supportedLocations
-            .slice(0, 6)
-            .map((city) => airQualityService.getCurrentReading(city, "CPCB_INDIA", forceRefresh))
-        ),
-      ]);
-
-      setReading(aqiData);
-      setWeather(weatherData);
-      setCityComparison(comparisonData);
-      setLastUpdated(new Date());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load air quality analytics");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const fetchAnalyticsSnapshot = React.useCallback(async (loc: GeoLocation, forceRefresh = false) => {
+    const [aqiData, weatherData, comparisonData] = await Promise.all([
+      airQualityService.getCurrentReading(loc, "CPCB_INDIA", forceRefresh),
+      weatherService.getCurrentWeather(loc, forceRefresh),
+      Promise.all(
+        siteConfig.supportedLocations
+          .slice(0, 6)
+          .map((city) => airQualityService.getCurrentReading(city, "CPCB_INDIA", forceRefresh))
+      ),
+    ]);
+    return { aqiData, weatherData, comparisonData };
   }, []);
 
+  const loadAnalytics = React.useCallback(
+    async (loc: GeoLocation, forceRefresh = false) => {
+      if (forceRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+
+      try {
+        const { aqiData, weatherData, comparisonData } = await fetchAnalyticsSnapshot(
+          loc,
+          forceRefresh
+        );
+        setReading(aqiData);
+        setWeather(weatherData);
+        setCityComparison(comparisonData);
+        setLastUpdated(new Date());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load air quality analytics");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [fetchAnalyticsSnapshot]
+  );
+
   React.useEffect(() => {
-    loadAnalytics(location);
-  }, [location, loadAnalytics]);
+    let cancelled = false;
+    fetchAnalyticsSnapshot(location, false)
+      .then(({ aqiData, weatherData, comparisonData }) => {
+        if (cancelled) return;
+        setReading(aqiData);
+        setWeather(weatherData);
+        setCityComparison(comparisonData);
+        setLastUpdated(new Date());
+        setError(null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load air quality analytics");
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+        setRefreshing(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location, fetchAnalyticsSnapshot]);
 
   if (loading && !reading) {
     return <DashboardLoadingSkeleton />;
@@ -112,7 +144,7 @@ export function AirQualityView() {
             <span>{refreshing ? "Syncing Telemetry..." : "Refresh Analytics"}</span>
           </Button>
           {lastUpdated && (
-            <span className="text-[11px] text-muted-foreground font-mono" aria-live="polite">
+            <span className="text-xs text-muted-foreground font-mono" aria-live="polite">
               Last updated:{" "}
               {new Intl.DateTimeFormat("en-IN", {
                 day: "numeric",
@@ -146,7 +178,7 @@ export function AirQualityView() {
               Select any city below to switch your active monitoring feed
             </p>
           </div>
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="outline" className="text-xs">
             CPCB Indicative
           </Badge>
         </div>
@@ -160,7 +192,10 @@ export function AirQualityView() {
                 key={cityReading.location.name}
                 type="button"
                 onClick={() => {
-                  setLocation(cityReading.location);
+                  setLocationOverride({
+                    forContext: contextLocation,
+                    loc: cityReading.location,
+                  });
                   setContextLocation(cityReading.location);
                 }}
                 className={`p-4 rounded-xl border text-left transition-all flex items-center justify-between ${
@@ -174,7 +209,7 @@ export function AirQualityView() {
                     <MapPin className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
                     <span>{cityReading.location.name}</span>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     PM2.5: {cityReading.pollutants.pm25 ?? "N/A"} µg/m³ • {cat.label}
                   </p>
                 </div>

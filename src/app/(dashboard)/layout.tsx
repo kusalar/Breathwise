@@ -3,8 +3,6 @@
 import * as React from "react";
 import { DashboardSidebar } from "@/components/layout/sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
-import { siteConfig } from "@/config/site";
-import { GeoLocation } from "@/types";
 import { X, Wind } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,6 +21,7 @@ import {
 
 import { LocationProvider, useLocation } from "@/context/location-context";
 import { OnboardingModal } from "@/components/dashboard/onboarding-modal";
+import { useEscapeKey, useFocusTrap } from "@/hooks/use-dismissable";
 
 const mobileNavItems = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -57,6 +56,10 @@ function DashboardLayoutInner({
   const { location, setLocation } = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const pathname = usePathname();
+  const drawerRef = React.useRef<HTMLDivElement>(null);
+
+  useEscapeKey(mobileSidebarOpen, () => setMobileSidebarOpen(false));
+  useFocusTrap(drawerRef, mobileSidebarOpen);
 
   return (
     <div className="flex min-h-screen bg-slate-50/60 dark:bg-forest-950/60">
@@ -71,7 +74,7 @@ function DashboardLayoutInner({
           aria-modal="true"
           aria-label="Navigation drawer"
         >
-          <div className="w-72 bg-white dark:bg-forest-950 h-full p-4 flex flex-col justify-between shadow-2xl">
+          <div ref={drawerRef} className="w-72 bg-white dark:bg-forest-950 h-full p-4 flex flex-col justify-between shadow-2xl">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-emerald-950">
                 <Link
@@ -85,6 +88,7 @@ function DashboardLayoutInner({
                   <span className="font-extrabold text-base">BreatheWise AI</span>
                 </Link>
                 <button
+                  type="button"
                   onClick={() => setMobileSidebarOpen(false)}
                   className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   aria-label="Close navigation drawer"
@@ -122,7 +126,7 @@ function DashboardLayoutInner({
               <span>Active City: {location.name}, {location.region}</span>
             </div>
           </div>
-          <div className="flex-1" onClick={() => setMobileSidebarOpen(false)} />
+          <div className="flex-1" aria-hidden="true" onClick={() => setMobileSidebarOpen(false)} />
         </div>
       )}
 

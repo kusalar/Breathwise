@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { airQualityService } from "@/services/air-quality/air-quality.service";
 import { AirQualityQuerySchema } from "@/lib/validations/air-quality";
 import { GeoLocation } from "@/types";
+import { enforceRateLimit, formatSafe500Response } from "@/lib/api-security";
 
 export async function GET(request: NextRequest) {
+  const limited = enforceRateLimit(request, "air-quality", { intervalMs: 60_000, maxRequests: 60 });
+  if (limited) return limited;
+
   try {
     const { searchParams } = new URL(request.url);
     const latParam = searchParams.get("latitude");
@@ -54,8 +58,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return formatSafe500Response(error, "AirQualityRoute");
   }
 }
 

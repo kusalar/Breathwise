@@ -2,21 +2,16 @@
 
 import * as React from "react";
 import {
-  Leaf,
-  Car,
-  Trash2,
-  Zap,
-  Flame,
   CheckCircle2,
   TrendingDown,
   Info,
   ArrowRight,
-  ShieldCheck,
   Plus,
 } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -126,11 +121,15 @@ export function SustainabilityView() {
           </p>
         </div>
 
-        <Link href="/dashboard/impact-tracker">
-          <Button variant="outline" className="border-emerald-600/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
-            View My Logged Impact
-            <ArrowRight className="h-4 w-4 ml-1.5" />
-          </Button>
+        <Link
+          href="/dashboard/impact-tracker"
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "border-emerald-600/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+          )}
+        >
+          View My Logged Impact
+          <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden="true" />
         </Link>
       </div>
 
@@ -148,7 +147,7 @@ export function SustainabilityView() {
           <Card key={alt.id} className="border-slate-200 dark:border-forest-800 shadow-sm flex flex-col justify-between">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 uppercase tracking-wider text-[10px] font-semibold border-none">
+                <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 uppercase tracking-wider text-xs font-semibold border-none">
                   {alt.category}
                 </Badge>
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -182,7 +181,7 @@ export function SustainabilityView() {
                 <div>
                   <strong className="text-slate-800 dark:text-slate-200">Health Impact:</strong> {alt.healthBenefit}
                 </div>
-                <div className="text-[11px] text-slate-500 italic">
+                <div className="text-xs text-slate-500 italic">
                   <strong>Source:</strong> {alt.scientificReference}
                 </div>
               </div>

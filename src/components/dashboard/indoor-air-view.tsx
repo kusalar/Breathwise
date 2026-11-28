@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useStoredState } from "@/hooks/use-stored-state";
 import { Home, Calculator, CheckCircle2, ShieldCheck } from "lucide-react";
 import { IndoorAirPanel } from "./indoor-air-panel";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -51,29 +52,12 @@ export function IndoorAirView() {
   const [widthFt, setWidthFt] = React.useState(12);
   const [heightFt, setHeightFt] = React.useState(10);
   const [achTarget, setAchTarget] = React.useState(5);
-  const [completedIds, setCompletedIds] = React.useState<string[]>([]);
-
-  React.useEffect(() => {
-    try {
-      const saved = localStorage.getItem(CHECKLIST_STORAGE_KEY);
-      if (saved) {
-        setCompletedIds(JSON.parse(saved) as string[]);
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
+  const [completedIds, setCompletedIds] = useStoredState<string[]>(CHECKLIST_STORAGE_KEY, []);
 
   const toggleItem = (id: string) => {
-    const next = completedIds.includes(id)
-      ? completedIds.filter((item) => item !== id)
-      : [...completedIds, id];
-    setCompletedIds(next);
-    try {
-      localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // ignore storage errors
-    }
+    setCompletedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
   };
 
   const areaSqFt = Math.max(0, lengthFt * widthFt);
@@ -181,19 +165,19 @@ export function IndoorAirView() {
               aria-live="polite"
             >
               <div>
-                <span className="text-[11px] text-muted-foreground block">Room Area</span>
+                <span className="text-xs text-muted-foreground block">Room Area</span>
                 <span className="text-lg font-extrabold text-slate-900 dark:text-white font-mono">
                   {areaSqFt} sq ft
                 </span>
               </div>
               <div>
-                <span className="text-[11px] text-muted-foreground block">Required CADR</span>
+                <span className="text-xs text-muted-foreground block">Required CADR</span>
                 <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
                   {recommendedCadrM3h} m³/h
                 </span>
               </div>
               <div>
-                <span className="text-[11px] text-muted-foreground block">US CFM Rating</span>
+                <span className="text-xs text-muted-foreground block">US CFM Rating</span>
                 <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
                   {recommendedCadrCfm} CFM
                 </span>
@@ -242,7 +226,7 @@ export function IndoorAirView() {
                     <span className={`text-xs font-semibold block ${checked ? "line-through text-muted-foreground" : "text-slate-900 dark:text-white"}`}>
                       {item.label}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">{item.detail}</span>
+                    <span className="text-xs text-muted-foreground">{item.detail}</span>
                   </div>
                   {checked && <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" aria-hidden="true" />}
                 </label>

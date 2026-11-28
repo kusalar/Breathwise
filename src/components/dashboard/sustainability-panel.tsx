@@ -1,5 +1,5 @@
 import { SustainableChoice } from "@/types";
-import { Leaf, TrendingUp, ShieldCheck, Zap } from "lucide-react";
+import { Leaf } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export function SustainabilityPanel() {
@@ -38,7 +38,7 @@ export function SustainabilityPanel() {
             <p className="text-xs text-muted-foreground">Personal emissions prevented this week</p>
           </div>
         </div>
-        <Badge variant="outline" className="text-[10px] text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
+        <Badge variant="outline" className="text-xs text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800">
           Verified Accounting
         </Badge>
       </div>
@@ -63,7 +63,7 @@ export function SustainabilityPanel() {
               <p className="text-xs text-muted-foreground">PM2.5 inhalation avoided</p>
             </div>
           </div>
-          <span className="text-[11px] text-emerald-800 dark:text-emerald-400 font-medium">
+          <span className="text-xs text-emerald-800 dark:text-emerald-400 font-medium">
             Calculated based on 4 low-emission commute shifts in Siliguri.
           </span>
         </div>
